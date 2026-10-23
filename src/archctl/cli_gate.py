@@ -107,7 +107,7 @@ def evaluate(request: dict) -> int:
     try:
         baseline = compile_model(baseline_root, request["model_dir"])
         snapshot = compile_model(root, request["model_dir"])
-        summary.update(schema_version=version(snapshot.model, "gate"),
+        summary.update(schema_version=version("gate"),
                        enforcement=snapshot.model.enforcement, guarantee=GUARANTEE)
         write_json(report / "baseline.lock.json", baseline.to_dict())
         write_json(report / "candidate.lock.json", snapshot.to_dict())

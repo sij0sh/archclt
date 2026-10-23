@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from archctl.core.enforcement import finding_dict, policy_obligation, version
+from archctl.core.enforcement import version
 from archctl.core.models import Finding, Observations, Snapshot
 
 INTRA_COMPONENT_REASON = "Intra-component import is not an inter-component architectural relationship"
@@ -42,9 +42,9 @@ def reconcile(snapshot: Snapshot, observations: Observations, freshness: list[Fi
             findings.append(Finding(f"violation:{policy.id}", "unknown" if freshness else "failed",
                 f"Observed relationship contradicts {policy.id}", policy.severity, policy.decision,
                 tuple(sorted({ref for e in violations for ref in e.evidence_refs})),
-                policy_obligation(model, policy)))
-    return {"schema_version": version(model, "reconciliation"), "model_revision": snapshot.revision,
+                policy.obligation))
+    return {"schema_version": version("reconciliation"), "model_revision": snapshot.revision,
             "source_revision": observations.source_revision, "source_digest": observations.source_digest,
-            "findings": [finding_dict(model, f) for f in sorted(findings, key=lambda f: f.id)],
+            "findings": [f.to_dict() for f in sorted(findings, key=lambda f: f.id)],
             "ignored": sorted(ignored, key=lambda item: (item["source"], item["target"], item["kind"])),
             "authority_updated": False}

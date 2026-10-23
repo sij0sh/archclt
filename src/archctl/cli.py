@@ -443,7 +443,7 @@ def dispatch(args: argparse.Namespace) -> int:
                                      source_roots=tuple(args.source_root))
             _emit(args, parse_evidence(bundle, snapshot).to_dict(), root)
         else:
-            _emit(args, {"schema_version": version(snapshot.model, "intent"), "model_revision": snapshot.revision,
+            _emit(args, {"schema_version": version("intent"), "model_revision": snapshot.revision,
                         "native_briefcase_format": False, "model": snapshot.model.to_dict()}, root)
         return 0
     if args.command == "evidence" or (args.command == "observe" and args.operation == "import"):

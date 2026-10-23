@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from archctl.core.enforcement import finding_dict, policy_obligation, version
+from archctl.core.enforcement import version
 from archctl.core.io import digest
 from archctl.core.models import Finding, Observations, Snapshot
 from archctl.integrations.process import (authoring_freshness, authority_matches,
@@ -50,7 +50,7 @@ def check(root: Path, snapshot: Snapshot, baseline: Snapshot, observations: Obse
             status, message = "unknown", "Insufficient static coverage to establish absence of the prohibited relationship"
         findings.append(Finding(policy.id, status, message, policy.severity, policy.decision,
                                 tuple(sorted({ref for e in edges for ref in e.evidence_refs})),
-                                policy_obligation(snapshot.model, policy)))
+                                policy.obligation))
     for relation in snapshot.model.relationships:
         if not relation.required:
             continue
@@ -80,11 +80,11 @@ def check(root: Path, snapshot: Snapshot, baseline: Snapshot, observations: Obse
     final_freshness = freshness() + authoring_freshness(root, snapshot)
     seen = {f.id for f in findings}
     findings.extend(f for f in final_freshness if f.id not in seen)
-    report = {"schema_version": version(snapshot.model, "guard"), "status": gate_status(findings, verification),
+    report = {"schema_version": version("guard"), "status": gate_status(findings, verification),
               "model_revision": snapshot.revision, "baseline_revision": baseline.revision,
               "source_revision": observations.source_revision, "source_digest": observations.source_digest,
               "impact_revision": impact["revision"], "authority_changed": not approved,
-              "findings": [finding_dict(snapshot.model, f) for f in findings], "verification": verification,
+              "findings": [f.to_dict() for f in findings], "verification": verification,
               "impact": impact}
     report["revision"] = digest(report)
     return report

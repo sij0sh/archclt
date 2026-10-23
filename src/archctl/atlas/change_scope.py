@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from archctl.core.enforcement import add_reason, policy_obligation
+from archctl.core.enforcement import add_reason
 from archctl.core.change import Change
 from archctl.core.io import digest, matches
 from archctl.core.models import Snapshot, owners
@@ -35,8 +35,8 @@ def apply_change(change: Change, snapshot: Snapshot, baseline: Snapshot, impact:
             continue
         required_decisions.add(policy.decision)
         for check in policy.checks:
-            add_reason(snapshot.model, obligations, check, policy.id, policy.decision,
-                       policy_obligation(snapshot.model, policy, verification=True))
+            add_reason(obligations, check, policy.id, policy.decision,
+                       policy.obligation)
     for decision in snapshot.model.decisions:
         if decision.id in required_decisions:
             decisions[decision.id] = {"id": decision.id, "path": decision.path, "status": decision.status}
@@ -44,7 +44,7 @@ def apply_change(change: Change, snapshot: Snapshot, baseline: Snapshot, impact:
         if not criterion.checks:
             gaps.append(f"Acceptance criterion has no verification: {criterion.id}")
         for check in criterion.checks:
-            add_reason(snapshot.model, obligations, check, criterion.id, "change-contract")
+            add_reason(obligations, check, criterion.id, "change-contract")
     result = {**impact, "task": change.objective, "verification": [obligations[k] for k in sorted(obligations)],
               "governing_decisions": [decisions[k] for k in sorted(decisions)],
               "unknowns": sorted(set(gaps)), "assessment": "partial" if gaps else "complete"}

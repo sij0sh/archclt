@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from archctl.core.enforcement import add_reason, policy_obligation, version
+from archctl.core.enforcement import add_reason, version
 from archctl.core.io import digest, relative_path, string
 from archctl.core.models import Observations, Snapshot, owners
 
@@ -66,7 +66,7 @@ def build_impact(snapshot: Snapshot, observations: Observations, paths: list[str
     decisions: set[str] = set()
     obligations: dict[str, dict] = {}
     def require(check: str, basis: str, decision: str, obligation: str = "required") -> None:
-        add_reason(model, obligations, check, basis, decision, obligation)
+        add_reason(obligations, check, basis, decision, obligation)
         decisions.add(decision)
     for decision in model.decisions:
         if set(decision.components) & affected.keys() and decision.status in {"accepted", "deprecated"}:
@@ -76,7 +76,7 @@ def build_impact(snapshot: Snapshot, observations: Observations, paths: list[str
         if participants & affected.keys():
             decisions.add(policy.decision)
             for check in policy.checks:
-                require(check, policy.id, policy.decision, policy_obligation(model, policy, verification=True))
+                require(check, policy.id, policy.decision, policy.obligation)
     for interface in model.interfaces:
         if {interface.provider, *interface.consumers} & affected.keys():
             for check in interface.verification:
@@ -86,7 +86,7 @@ def build_impact(snapshot: Snapshot, observations: Observations, paths: list[str
             for check in workflow.verification:
                 require(check, workflow.id, workflow.decision)
     decision_index = {d.id: d for d in model.decisions}
-    report = {"schema_version": version(model, "impact"), "task": task,
+    report = {"schema_version": version("impact"), "task": task,
               "model_revision": snapshot.revision,
               "source": {"revision": observations.source_revision, "digest": observations.source_digest},
               "changed_paths": paths, "scope": "all" if all_components else "changed",

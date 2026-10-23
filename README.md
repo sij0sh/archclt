@@ -38,7 +38,7 @@ Use the versioned GitHub release artifacts before the first registry publication
 See [installation](docs/install.md) for wheel installation and the skill bundle.
 
 Native source evidence requires a compatible, separately installed
-[Briefcase](https://github.com/sij0sh/briefcase-release) executable. Set `BRIEFCASE_BIN`
+[Briefcase](https://github.com/sij0sh/briefcase) executable. Set `BRIEFCASE_BIN`
 to its absolute path. You can also supply a trusted normalized evidence bundle.
 Read the [compatibility and evidence limits](docs/briefcase-integration.md).
 

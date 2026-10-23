@@ -9,11 +9,7 @@ dist/
 .coverage
 *.log
 .agents/artifacts/
-validation/evaluation/
-validation/model.lock.json
-validation/demo-results.json
 /MANIFEST.sha256
-/validation/
 /npm/runtime/
 /node_modules/
 *.tgz

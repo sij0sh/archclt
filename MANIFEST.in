@@ -8,7 +8,6 @@ recursive-include architecture *.yaml *.md
 recursive-include skills *.md *.yaml
 recursive-include npm *.cjs
 recursive-include .github *.yml
-prune validation
 prune npm/runtime
 prune .archctl
 prune .briefcase

@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, UniqueLoader, choice, contained, digest,
                              file_digest, items, load_document, obj, relative_path,
                              stable_id, string, strings)
@@ -199,8 +200,8 @@ def has_authoring_model(directory: Path) -> bool:
 
 
 def _authoring_version(content: dict) -> None:
-    if content["schema_version"] != "archctl.authoring.v2":
-        raise InputError("Expected archctl.authoring.v2; run archctl model migrate for legacy intent")
+    if content["schema_version"] != version("authoring"):
+        raise InputError(f"Expected {version('authoring')}; v1 authoring is no longer supported (use archctl 0.3.0 to migrate)")
     choice(content.get("enforcement", "strict"), {"strict", "selective"}, "system.enforcement")
 
 
@@ -231,7 +232,6 @@ def compile_model(root: Path, model_dir: str = "architecture") -> Snapshot:
     if any(path.stem == "model" for path in files) and len(files) > 1:
         raise InputError("A model file cannot be combined with other authoring files")
     seen: set[str] = set()
-    legacy_split = False
     for path in files:
         if path.stem not in {"model", "system", *SECTIONS} or path.stem in seen:
             raise InputError(f"Unknown or duplicate authoring file: {path.name}")
@@ -243,10 +243,6 @@ def compile_model(root: Path, model_dir: str = "architecture") -> Snapshot:
         if path.stem in {"model", "system"}:
             obj(content, path.stem, SYSTEM_FIELDS | (set(SECTIONS) if path.stem == "model" else set()),
                 {"schema_version", "system_id", "name", "domains"})
-            if content.get("schema_version") == "archctl.authoring.v1":
-                legacy_split = path.stem == "system"
-                from archctl.core.migration import migrate_document
-                content = migrate_document(content)
             _authoring_version(content)
             data.update({k: v for k, v in content.items() if k != "schema_version"})
         else:
@@ -254,12 +250,6 @@ def compile_model(root: Path, model_dir: str = "architecture") -> Snapshot:
             data[path.stem] = content[path.stem]
     if not seen & {"model", "system"}:
         raise InputError("Missing architecture/model.yaml or system.yaml (or .json/.yml)")
-    if legacy_split:
-        from archctl.core.migration import migrate_document
-        legacy = {"schema_version": "archctl.authoring.v1", **data}
-        legacy.pop("enforcement", None)
-        data = migrate_document(legacy)
-        data.pop("schema_version")
     if "policies" in data:
         data["policies"] = _expand_targets(data["policies"])
     data["decisions"] = []
@@ -298,8 +288,8 @@ def read_snapshot(path: Path) -> Snapshot:
     data = load_document(path)
     obj(data, "snapshot", {"schema_version", "revision", "model", "sources"},
         {"schema_version", "revision", "model", "sources"})
-    if data["schema_version"] != "archctl.snapshot.v2":
-        raise InputError("Expected archctl.snapshot.v2; recompile migrated authoring intent")
+    if data["schema_version"] != version("snapshot"):
+        raise InputError(f"Expected {version('snapshot')}; recompile authoring intent")
     model = parse_model(data["model"])
     if not isinstance(data["sources"], dict):
         raise InputError("snapshot.sources must be a path-to-SHA256 object")

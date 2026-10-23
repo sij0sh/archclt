@@ -28,6 +28,6 @@
     "src/archctl/integrations/process.py": "c5231f07c9321e6be70ae795d4529e99c917b3b7c5f69ee3fc95590c9b896f5d",
     "src/archctl/observatory/workflows.py": "9b8e448da11ff8679a99fa907ed2f2e04a09565dbeeee05eee54836b3870fa94"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "e06c252da858bb046d943def5a3a541206bb45d5505f1798803a13691bb41ff6"
+  "schema_version": "archctl.memory.v2",
+  "revision": "8c112639d94c914b26814a093adda6442f67737a4694a776208bfa13e83b3139"
 }

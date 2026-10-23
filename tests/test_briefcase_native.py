@@ -131,6 +131,10 @@ class NativeBriefcaseIntegrationTests(unittest.TestCase):
         snapshot, bundle = self.export()
         self.assertEqual(bundle["coverage"]["status"], "partial")
         self.assertTrue(any("app/orders/generated.py" in gap for gap in bundle["coverage"]["gaps"]))
+        self.assertTrue(any("did not retain exact current bytes" in gap and "app/orders/generated.py" in gap
+                            for gap in bundle["coverage"]["gaps"]))
+        self.assertEqual(bundle["source"]["files"]["app/orders/generated.py"],
+                         hashlib.sha256(ignored.read_bytes()).hexdigest())
 
     def test_unsupported_component_file_keeps_coverage_partial(self):
         bridge = self.root / "app/payments/bridge.rs"

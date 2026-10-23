@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- All public authoring and exchange contracts use one version, v2.
+- Advisory context, memory, execution and context-config contracts move from v1 to v2.
+- Existing memory records migrate once to `archctl.memory.v2`; statements and pins stay unchanged.
+- Legacy `archctl.authoring.v1` input and `archctl model migrate` are removed from 0.4.0.
+- Users migrate v1 authoring with 0.3.0 before upgrading. v1 records are rejected, never silently converted.
+- Governed and advisory contract families remain separate; gate semantics and outcomes are unchanged.
+- `pi-archctl` must accept only v2 contracts.
+
 ## 0.3.0
 
 - Default agent workflow assembles task-specific architectural context without adoption.

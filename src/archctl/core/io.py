@@ -22,6 +22,15 @@ class InputError(ValueError):
 # One exclusion policy for repository source inventory and evidence pins.
 SKIP = {".git", ".archctl", ".briefcase", "__pycache__", ".venv", "venv", "node_modules",
         "target", "dist", "build", ".pytest_cache"}
+MEMORY_ROOT = "architecture/memory"
+
+
+def excluded(relative: str) -> bool:
+    """Return whether a repository-relative path is outside source evidence."""
+    if relative == MEMORY_ROOT or relative.startswith(MEMORY_ROOT + "/"):
+        return True
+    return any(part in SKIP or part.startswith(".") or part.endswith(".egg-info")
+               for part in PurePosixPath(relative).parts)
 
 
 class UniqueLoader(yaml.SafeLoader):
@@ -134,7 +143,7 @@ def source_files(root: Path, patterns: tuple[str, ...]) -> dict[str, str]:
         expanded = pattern + "/*" if pattern.endswith("/**") else pattern
         for path in root.glob(expanded):
             rel = path.relative_to(root).as_posix()
-            if any(part in SKIP for part in PurePosixPath(rel).parts):
+            if excluded(rel):
                 continue
             target = contained(root, rel)
             if target.is_file():

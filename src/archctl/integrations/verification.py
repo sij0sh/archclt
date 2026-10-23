@@ -8,6 +8,7 @@ import re
 import uuid
 
 from archctl.core.context import inventory
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, contained, digest, file_digest, load_document,
                              obj, relative_path, source_files, string, strings, write_json)
 from archctl.integrations.process import execute_command
@@ -42,8 +43,8 @@ def parse_execution(value: object) -> dict:
         "timeout_seconds", "environment", "started_at", "source", "result", "references", "revision"},
         {"schema_version", "id", "origin", "task", "command", "cwd", "timeout_seconds",
          "environment", "started_at", "source", "result", "references"})
-    if v["schema_version"] != "archctl.execution.v1" or v["origin"] not in {"archctl", "harness"}:
-        raise InputError("Expected archctl.execution.v1 with archctl or harness origin")
+    if v["schema_version"] != version("execution") or v["origin"] not in {"archctl", "harness"}:
+        raise InputError(f"Expected {version('execution')} with archctl or harness origin")
     for key in ("id", "task", "environment", "started_at"):
         string(v[key], key)
     if not isinstance(v["command"], list) or not v["command"]:
@@ -106,7 +107,7 @@ def run(root: Path, command: list[str], *, task: str, paths: list[str], cwd: str
     started = datetime.now(timezone.utc).isoformat()
     result = execute_command(root, tuple(command), cwd, timeout_seconds)
     after, after_gaps = pin_scope(root, paths)
-    return parse_execution({"schema_version": "archctl.execution.v1", "id": "run-" + uuid.uuid4().hex,
+    return parse_execution({"schema_version": version("execution"), "id": "run-" + uuid.uuid4().hex,
         "origin": "archctl", "task": task, "command": command, "cwd": cwd,
         "timeout_seconds": timeout_seconds, "environment": environment, "started_at": started,
         "source": {"paths": paths, "files": before, "gaps": sorted(set(gaps + after_gaps)),

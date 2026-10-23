@@ -9,6 +9,7 @@ import os
 import re
 import tempfile
 
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, choice, contained, digest, file_digest,
                              load_document, obj, relative_path, source_files,
                              stable_id, string, strings)
@@ -34,7 +35,7 @@ class Memory:
     def to_dict(self) -> dict:
         value = json.loads(json.dumps(asdict(self)))
         value["source_files"] = dict(self.source_files)
-        value["schema_version"] = "archctl.memory.v1"
+        value["schema_version"] = version("memory")
         value["revision"] = digest(value)
         return value
 
@@ -43,8 +44,8 @@ def parse_memory(value: object) -> Memory:
     fields = {"schema_version", "revision", *Memory.__dataclass_fields__}
     data = obj(value, "memory", fields,
                {"schema_version", "id", "statement", "rationale", "origin", "references"})
-    if data["schema_version"] != "archctl.memory.v1":
-        raise InputError("Expected archctl.memory.v1")
+    if data["schema_version"] != version("memory"):
+        raise InputError(f"Expected {version('memory')}")
     pins = data.get("source_files", {})
     if not isinstance(pins, dict):
         raise InputError("memory.source_files must be a path-to-SHA256 object")

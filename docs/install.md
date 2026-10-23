@@ -1,14 +1,14 @@
 # Installation
 
-## Source update 0.3.0
+## Source update 0.4.0
 
 Install the Python project from this source with `python3 -m pip install -e .`,
 or build a wheel with `python3 -m pip wheel --no-deps --no-build-isolation .`.
 Copy `skills/architecture-control/` to your coding agent's skill directory.
 Start with `archctl context '<task>' --paths ...`; adoption is optional.
 
-The release workflow publishes the 0.3.0 wheel, source archive, skill ZIP and
-npm tarball when `v0.3.0` is tagged. Registry publication follows that release and
+The release workflow publishes the 0.4.0 wheel, source archive, skill ZIP and
+npm tarball when `v0.4.0` is tagged. Registry publication follows that release and
 is controlled by `PUBLISH_REGISTRIES`. Context and ordinary verification may use
 a project environment; external reviewed evaluators are required only by the
 governed gate.
@@ -19,7 +19,7 @@ Python 3.11+ and Git are required. npm also requires Node.js 20+.
 ## npm
 
 ```bash
-npm install -g https://github.com/sij0sh/archclt/releases/download/v0.3.0/archclt-archctl-0.3.0.tgz
+npm install -g https://github.com/sij0sh/archclt/releases/download/v0.4.0/archclt-archctl-0.4.0.tgz
 archctl setup
 export ARCHCTL_BIN="$(archctl --runtime-path)"
 archctl install-skill "$HOME/.agents/skills"
@@ -32,24 +32,24 @@ Set `ARCHCLT_PYTHON` to an absolute Python interpreter or `ARCHCLT_HOME` to a
 user-owned directory outside source checkouts. The launcher preserves the
 application's working directory, PATH, streams and command exit status.
 
-The same launcher supports `npx --package @archclt/archctl@0.3.0 archctl` and
+The same launcher supports `npx --package @archclt/archctl@0.4.0 archctl` and
 project development dependencies; its evaluator still lives outside the project.
 Registry commands become available after the first release is published.
 
 ## Python or release wheel
 
 ```bash
-pipx install https://github.com/sij0sh/archclt/releases/download/v0.3.0/archclt-0.3.0-py3-none-any.whl
+pipx install https://github.com/sij0sh/archclt/releases/download/v0.4.0/archclt-0.4.0-py3-none-any.whl
 ```
 
-For the first release or an offline install, download `archclt-0.3.0-py3-none-any.whl`
+For the first release or an offline install, download `archclt-0.4.0-py3-none-any.whl`
 and `SHA256SUMS` from the corresponding GitHub release. Verify the hash, then:
 
 ```bash
-python3 -m venv "$HOME/.local/opt/archclt/0.3.0"
-"$HOME/.local/opt/archclt/0.3.0/bin/python" -m pip install \
-  /path/to/archclt-0.3.0-py3-none-any.whl
-export ARCHCTL_BIN="$HOME/.local/opt/archclt/0.3.0/bin/archctl"
+python3 -m venv "$HOME/.local/opt/archclt/0.4.0"
+"$HOME/.local/opt/archclt/0.4.0/bin/python" -m pip install \
+  /path/to/archclt-0.4.0-py3-none-any.whl
+export ARCHCTL_BIN="$HOME/.local/opt/archclt/0.4.0/bin/archctl"
 ```
 
 For offline installation, provision a compatible PyYAML 6.x wheel and use

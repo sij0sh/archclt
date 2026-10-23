@@ -27,7 +27,7 @@ def main() -> int:
             if result.returncode != 0:
                 raise RuntimeError(result.stdout + result.stderr)
             return json.loads(result.stdout)
-        note = {"schema_version": "archctl.memory.v1", "id": "batch-lifetime",
+        note = {"schema_version": "archctl.memory.v2", "id": "batch-lifetime",
             "statement": "API batching has request-scoped mutable state",
             "rationale": "Overlapping worker jobs have a different lifetime; extract a pure operation before reuse.",
             "origin": "agent_inferred", "references": ["conversation:demo/task-1"],
@@ -35,6 +35,8 @@ def main() -> int:
         write_json(root / "reason.json", note)
         cli("memory", "record", "--input", "reason.json")
         cold = cli("context", "Reuse batching for worker concurrency", "--paths", "src/worker/jobs.py")
+        assert cold["schema_version"] == "archctl.context.v2"
+        assert cold["memories"][0]["schema_version"] == "archctl.memory.v2"
         assert cold["memories"][0]["origin"] == "agent_inferred"
         assert cold["memories"][0]["references"] == ["conversation:demo/task-1"]
         source.write_text("def batch(items): return tuple(items)\n")
@@ -52,6 +54,7 @@ def main() -> int:
                 "pool=ThreadPoolExecutor(4); assert list(pool.map(batch, [[1], [2], [3], [4]])) == [(1,), (2,), (3,), (4,)]; pool.shutdown()" ]))
         final = cli("context", "Batching concurrency")
         assert len(final["memories"]) == 2
+        assert final["executions"][0]["schema_version"] == "archctl.execution.v2"
         assert final["executions"][0]["result"]["status"] == "passed"
         assert not (root / "architecture/model.yaml").exists()
         assert not (root / ".git").exists()

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from archctl.atlas.context import build_context, markdown
 from archctl.core.compiler import compile_model, has_authoring_model
+from archctl.core.contracts import version
 from archctl.core.context import decision_notes, inventory, load_bindings, terms
 from archctl.core.io import (InputError, contained, digest, load_document, relative_path,
                              string, write_json, write_text)
@@ -54,7 +55,7 @@ def add_commands(commands) -> None:
     running.add_argument("--cwd", default=None)
     running.add_argument("--timeout", type=int, default=None)
     running.add_argument("--environment", default="local")
-    importing = operations.add_parser("import", help="Retain a harness-produced archctl.execution.v1 result")
+    importing = operations.add_parser("import", help=f"Retain a harness-produced {version('execution')} result")
     importing.add_argument("--input", required=True, type=Path)
 
 
@@ -115,10 +116,12 @@ def context(root: Path, args, *, paths: list[str]) -> dict:
     if observations:
         stale = [f.message for f in check_freshness(root, mapping, observations)]
     memories = read_memories(root)
+    notes, note_gaps = decision_notes(root, args.model_dir) if not snapshot else ([], [])
+    gaps.extend(note_gaps)
     packet = build_context(root, args.task, paths, bindings, files, memories, snapshot=snapshot,
         observations=observations, evidence_gaps=gaps, stale_evidence=stale,
         dependencies=args.dependency, context_refs=args.reference,
-        decision_notes=decision_notes(root, args.model_dir) if not snapshot else [], limit=args.limit)
+        decision_notes=notes, limit=args.limit)
     # Results are selected by task or overlapping source scope, never treated as approval.
     results = []
     for record in read_executions(root):
@@ -148,7 +151,7 @@ def dispatch(root: Path, args, paths: list[str] | None = None) -> int:
                 write_text(path, value)
             else:
                 write_json(path, value)
-            print(json.dumps({"schema_version": "archctl.output.v2", "status": "assembled", "output": str(path)}))
+            print(json.dumps({"schema_version": version("output"), "status": "assembled", "output": str(path)}))
         else:
             print(value if isinstance(value, str) else json.dumps(value, indent=2, ensure_ascii=False))
         return 0  # Successful assembly says nothing about correctness or permission.
@@ -156,7 +159,7 @@ def dispatch(root: Path, args, paths: list[str] | None = None) -> int:
         if args.operation == "record":
             path = args.input.resolve() if args.input.is_absolute() else contained(root, args.input.as_posix())
             record = remember(root, load_document(path))
-            print(json.dumps({"schema_version": "archctl.memory-recorded.v1", "status": "recorded",
+            print(json.dumps({"schema_version": version("memory-recorded"), "status": "recorded",
                 "id": record.id, "revision": record.to_dict()["revision"],
                 "path": f"architecture/memory/{record.id}.json"}))
         else:
@@ -168,7 +171,7 @@ def dispatch(root: Path, args, paths: list[str] | None = None) -> int:
             query = terms(getattr(args, "query", ""))
             result = [{**r.to_dict(), "freshness": freshness(root, r)} for r in records if not query or
                       query & terms(r.statement + " " + r.rationale + " " + " ".join(r.topics))]
-            print(json.dumps({"schema_version": "archctl.memories.v1", "records": result}, indent=2))
+            print(json.dumps({"schema_version": version("memories"), "records": result}, indent=2))
         return 0
     if args.operation == "run":
         if args.check:

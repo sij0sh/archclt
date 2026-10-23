@@ -29,24 +29,20 @@ class CliContractTests(ProjectTest):
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return result
 
-    def test_model_migration_preserves_original_and_rejects_overwrite(self):
-        import yaml
+    def test_legacy_authoring_and_migration_command_are_rejected(self):
         source = self.root / "architecture/model.yaml"
         document = yaml.safe_load(source.read_text())
-        document.update(schema_version="archctl.authoring.v1")
-        document.pop("enforcement")
-        for policy in document["policies"]:
-            policy.pop("obligation")
+        document["schema_version"] = "archctl.authoring.v1"
         source.write_text(yaml.safe_dump(document))
-        original = source.read_bytes()
-        result = self.cli("model", "migrate", "--input", "architecture/model.yaml", "--out", "migrated.yaml")
-        self.assertEqual(json.loads(result.stdout)["schema_version"], "archctl.output.v2")
-        self.assertEqual(source.read_bytes(), original)
-        migrated = yaml.safe_load((self.root / "migrated.yaml").read_text())
-        self.assertEqual(migrated["enforcement"], "strict")
-        self.assertTrue(all(p["obligation"] == "required" for p in migrated["policies"]))
-        self.cli("model", "migrate", "--input", "architecture/model.yaml", "--out", "migrated.yaml", expected=3)
-        self.assertEqual(source.read_bytes(), original)
+        error = json.loads(self.cli("model", "validate", expected=3).stderr)
+        self.assertEqual(error["schema_version"], "archctl.error.v2")
+        self.assertIn("archctl.authoring.v2", error["message"])
+        self.assertIn("no longer supported", error["message"])
+        error = json.loads(self.cli("model", "migrate", "--input", "architecture/model.yaml",
+                                    "--out", "migrated.yaml", expected=3).stderr)
+        self.assertEqual(error["schema_version"], "archctl.error.v2")
+        self.assertIn("invalid choice", error["message"])
+        self.assertFalse((self.root / "migrated.yaml").exists())
 
     def test_model_validate_json_and_error_contracts(self):
         result = self.cli("model", "validate")

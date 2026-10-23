@@ -13,7 +13,7 @@ from archctl.integrations.verification import run
 
 class ContextSchemaGenerationTests(unittest.TestCase):
     def test_published_schemas_match_the_generator(self):
-        root = Path(__file__).resolve().parents[1] / "contracts/context/v1"
+        root = Path(__file__).resolve().parents[1] / "contracts/context/v2"
         for name, schema in make_schemas().items():
             self.assertEqual(json.loads((root / f"{name}.schema.json").read_text()), schema)
 

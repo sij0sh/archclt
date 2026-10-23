@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from archctl.core.io import InputError, digest
+from archctl.core.contracts import version
 from archctl.core.models import Finding, Observations, Snapshot
 from archctl.integrations.process import (authoring_freshness, authority_matches,
                                          run_checks)
@@ -22,7 +23,7 @@ def run_workflow(root: Path, snapshot: Snapshot, baseline: Snapshot, observation
     approved = authority_matches(snapshot, baseline)
     status = "failed" if any(r["status"] == "failed" for r in results) else (
         "passed" if approved and not gaps and all(r["status"] == "passed" for r in results) else "unknown")
-    report = {"schema_version": "archctl.workflow-result.v2", "workflow": workflow_id,
+    report = {"schema_version": version("workflow-result"), "workflow": workflow_id,
               "status": status, "model_revision": snapshot.revision, "baseline_revision": baseline.revision,
               "source_digest": observations.source_digest, "verification": results,
               "gaps": [f.to_dict() for f in gaps], "authority_changed": not approved,

@@ -3,7 +3,9 @@
 This guide describes the optional governed v2 model. Default development can
 use [context and architectural memory](context.md) without authoring or adopting
 it. `architecture/context.yaml` is an independent advisory binding file and is
-excluded from the compiler's governed authoring inputs.
+excluded from the compiler's governed authoring inputs. The global
+`--model-dir` option moves the governed model and ADRs only; advisory bindings
+and memory stay under `architecture/`.
 
 ## Identity and files
 
@@ -28,7 +30,7 @@ components:
 
 Supported component kinds: `service`, `library`, `database`, `queue`, `external`, `ui`. These are descriptive; a `database` kind alone does not imply a prohibition. File-bound components are the reconciliation unit. A component with no actual files cannot support complete static coverage.
 
-Paths use repository-relative POSIX globs. `*` matches one segment and `**` spans segments. Absolute paths, `..`, non-normalized paths and symlink escapes are rejected. Source inventory ignores `.git`, `.archctl`, `__pycache__`, `.venv`, `node_modules` and `target`. Use source-specific bindings, not a wildcard over an entire checkout. Overlapping bindings for a changed file create an explicit impact gap.
+Paths use repository-relative POSIX globs. `*` matches one segment and `**` spans segments. Absolute paths, `..`, non-normalized paths and symlink escapes are rejected. Source inventory and evidence pins share one exclusion policy: `.git`, `.archctl`, `.briefcase`, `__pycache__`, `.venv`, `venv`, `node_modules`, `target`, `dist`, `build`, `.pytest_cache`, hidden paths, `*.egg-info` and `architecture/memory/`. Use source-specific bindings, not a wildcard over an entire checkout. Overlapping bindings for a changed file create an explicit impact gap.
 
 ## Decisions
 
@@ -125,16 +127,19 @@ The default `enforcement: strict` keeps in-scope undeclared dependencies blockin
 An explicitly reviewed `enforcement: selective` makes undeclared observations
 advisory. Both settings use the same schemas, types and reports.
 
-For a legacy single-file model, run:
+## Migrating from v1
+
+0.4.0 accepts only `archctl.authoring.v2`. If a repository still has v1 intent,
+run this command with 0.3.0:
 
 ```bash
 archctl model migrate --input architecture/model.yaml --out migrated-model.yaml
 ```
 
 Review the result before replacing the original and selecting a new baseline.
-Migration preserves v1 verification requirements and warning-only structural
-policies. Legacy `selective-v2` becomes `selective`. Legacy authoring v1 is
-normalized at the input boundary for transition; all outputs are v2. Legacy
+The migration preserves old verification requirements and warning-only structural
+policies. Legacy `selective-v2` becomes `selective`. The 0.4.0 CLI has no
+`model migrate` command and rejects v1 intent instead of normalizing it. Legacy
 snapshots, evidence and task contracts must be regenerated in the v2 format.
 
 ## Verification and workflows

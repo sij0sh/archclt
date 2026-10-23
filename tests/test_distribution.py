@@ -43,9 +43,10 @@ class DistributionTests(unittest.TestCase):
         with tarfile.open(next(self.output.glob('*.tar.gz'))) as archive:
             names = archive.getnames()
             for suffix in ('tests/support.py', 'tests/__init__.py', 'scripts/generate_schemas.py',
-                           'contracts/v2/evidence.schema.json', 'skills/architecture-control/SKILL.md'):
+                           'scripts/migrate_memory_v2.py', 'contracts/v2/evidence.schema.json',
+                           'contracts/context/v2/memory.schema.json', 'skills/architecture-control/SKILL.md'):
                 self.assertTrue(any(name.endswith('/'+suffix) for name in names), suffix)
-            self.assertFalse(any('/validation/' in name or '/contracts/v1/' in name for name in names))
+            self.assertFalse(any('/validation/' in name or '/contracts/v1/' in name or '/contracts/context/v1/' in name for name in names))
             destination = self.directory/'extracted'
             # All members were produced above from this task's copied source tree.
             archive.extractall(destination, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))

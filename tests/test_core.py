@@ -9,6 +9,7 @@ import tempfile
 import yaml
 
 from archctl.core.compiler import compile_model, parse_model, read_snapshot
+from archctl.core.context import inventory
 from archctl.core.io import (InputError, contained, load_document, matches, source_files, write_json,
                              write_text)
 from tests.fixtures.storefront import initialize
@@ -26,34 +27,22 @@ class CompilerTests(ProjectTest):
         write_json(path, self.baseline.to_dict())
         self.assertEqual(read_snapshot(path), self.baseline)
 
-    def test_legacy_authoring_normalizes_once_to_v2(self):
-        from archctl.core.migration import migrate_document
-        document = load_document(self.root / "architecture/model.yaml")
-        document["schema_version"] = "archctl.authoring.v1"
-        document.pop("enforcement")
-        for policy in document["policies"]:
-            policy.pop("obligation")
-        migrated = migrate_document(document)
-        self.assertEqual(migrated["enforcement"], "strict")
-        self.assertTrue(all(p["obligation"] == "required" for p in migrated["policies"]))
-        write_text(self.root / "architecture/model.yaml", yaml.safe_dump(document))
-        self.assertEqual(self.candidate().model, self.baseline.model)
-        self.assertEqual(self.candidate().to_dict()["schema_version"], "archctl.snapshot.v2")
-        document["policies"][0]["severity"] = "warning"
-        document["policies"][1]["severity"] = "warning"
-        migrated = migrate_document(document)
-        self.assertEqual([p["obligation"] for p in migrated["policies"]], ["advisory", "required"])
-
-    def test_legacy_split_authoring_has_the_same_normalized_obligations(self):
+    def test_legacy_authoring_is_rejected(self):
         path = self.root / "architecture/model.yaml"
         document = load_document(path)
         document["schema_version"] = "archctl.authoring.v1"
-        document.pop("enforcement")
-        for policy in document["policies"]:
-            policy.pop("obligation")
         write_text(path, yaml.safe_dump(document))
+        with self.assertRaisesRegex(InputError, "archctl.authoring.v2"):
+            compile_model(self.root)
+
+    def test_legacy_split_authoring_is_rejected(self):
         split_model(self.root)
-        self.assertEqual(self.candidate().model, self.baseline.model)
+        path = self.root / "architecture/system.yaml"
+        document = load_document(path)
+        document["schema_version"] = "archctl.authoring.v1"
+        write_text(path, yaml.safe_dump(document))
+        with self.assertRaisesRegex(InputError, "archctl.authoring.v2"):
+            compile_model(self.root)
 
     def test_obligations_and_modes_require_explicit_valid_values(self):
         path = self.root / "architecture/model.yaml"
@@ -231,3 +220,18 @@ class CompilerTests(ProjectTest):
         files = source_files(nested, ("app/**",))
         self.assertIn("app/orders/api.py", files)
         self.assertIn("app/ledger/store.py", files)
+
+    def test_inventory_and_evidence_pins_share_one_exclusion_policy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for relative in (".archctl/a.py", ".briefcase/b.py", ".agents/artifacts/a.md",
+                             "build/c.py", "dist/d.py", ".pytest_cache/e.py", ".venv/f.py",
+                             "node_modules/g.py", "__pycache__/h.py", "pkg.egg-info/i.py",
+                             ".hidden/j.py", "architecture/memory/m.json", "src/a.py"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("value = 1\n")
+            files, truncated = inventory(root)
+            self.assertFalse(truncated)
+            self.assertEqual(files, ["src/a.py"])
+            self.assertEqual(list(source_files(root, ("**/*",))), ["src/a.py"])

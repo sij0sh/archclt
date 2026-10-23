@@ -25,7 +25,7 @@ class ChangeContractTests(ProjectTest):
     def test_strict_references_fields_and_scope(self):
         cases = [lambda c: c.update(approved=True),
                  lambda c: c["scope"].update(components=["missing"]),
-                 lambda c: c["scope"].update(excluded_components=["orders"]),
+                 lambda c: c["scope"].update(excluded_components=["orders", "payments", "ledger"]),
                  lambda c: c["scope"].update(paths=["../escape/**"]),
                  lambda c: c["constraints"].update(decisions=["ADR-MISSING"]),
                  lambda c: c["constraints"].update(policies=["missing"]),
@@ -36,6 +36,16 @@ class ChangeContractTests(ProjectTest):
             value = contract(); edit(value)
             with self.subTest(value=value), self.assertRaises(InputError):
                 parse_change(value, self.baseline)
+
+    def test_excluded_components_subtract_from_allowed_scope(self):
+        value = contract()
+        value["scope"].update(components=["orders", "payments", "ledger"],
+                              excluded_components=["ledger"])
+        change = parse_change(value, self.baseline)
+        self.assertEqual(change.allowed_components, ("orders", "payments"))
+        impact = build_impact(self.baseline, self.evidence(), ["app/ledger/store.py"], "excluded scope", [])
+        result = apply_change(change, self.baseline, self.baseline, impact)
+        self.assertTrue(any("outside reviewed change scope: ledger" in gap for gap in result["unknowns"]))
 
     def test_contract_adds_obligations_not_just_existing_policy_checks(self):
         impact = build_impact(self.baseline, self.evidence(), ["app/orders/api.py"], "task", [])

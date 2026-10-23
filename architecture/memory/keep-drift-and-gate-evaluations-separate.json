@@ -29,6 +29,6 @@
     "src/archctl/cli_gate.py": "2b56a6897b4e616586666a086979196ae1558b9560f6a06fd4d311d7f1f50565",
     "src/archctl/guard/evaluate.py": "3d6faa7e725d838eca032f7e2294ddbbc512584743fbeb71d8fa4a06c5fdc200"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "4fd29c611cb43a6a8c0eb66f6e597e8e84b706dde3d37eab67680b5826d1c4f0"
+  "schema_version": "archctl.memory.v2",
+  "revision": "5818e1d7d31693f0d51dfb490e3fbec0689c2657e4dc8809ca6f96d63afad29b"
 }

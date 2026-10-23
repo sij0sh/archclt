@@ -3,10 +3,6 @@ GUARANTEE = ("Required obligations passed only within reported scope and coverag
              "Advisory failures and unknowns may remain; this is not universal structural conformance.")
 
 
-def version(contract: str) -> str:
-    return f"archctl.{contract}.v2"
-
-
 def add_reason(obligations: dict, check: str, basis: str,
                decision: str, obligation: str = "required") -> None:
     entry = obligations.setdefault(check, {"id": check, "basis": "declared_requirement",

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from archctl.core.enforcement import version
+from archctl.core.contracts import version
 from archctl.core.io import digest
 from archctl.core.models import Finding, Observations, Snapshot
 from archctl.integrations.process import (authoring_freshness, authority_matches,

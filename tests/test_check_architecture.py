@@ -250,6 +250,10 @@ class CheckArchitectureTests(ProjectTest):
     def test_all_scope_audit_runs_without_change_contract(self):
         self.assertEqual(self.gate("--scope", "all", "--run", change=False).returncode, 0)
         self.assertEqual(self.summary["scope"], "all")
+        self.assertNotIn("acceptance", self.summary["stages"])
+        self.assertEqual(self.summary["acceptance"], [])
+        report = (self.report / "gate-summary.md").read_text()
+        self.assertIn("Task acceptance: not assessed (no Change Contract supplied).", report)
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "Install .[dev] for JSON Schema conformance checks")
     def test_published_gate_schema_validates_actual_run(self):

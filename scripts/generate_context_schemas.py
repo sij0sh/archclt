@@ -1,6 +1,7 @@
-"""Generate independent advisory contracts without changing v2 gate semantics."""
+"""Generate independent advisory contracts at the shared public version."""
 
 from pathlib import Path
+from archctl.core.contracts import VERSION, version
 from archctl.core.io import write_json
 
 
@@ -17,7 +18,7 @@ def make_schemas() -> dict:
         return {"type": "object", "properties": props, "additionalProperties": False,
                 "required": sorted(set(props) - set(optional))}
     def contract(name, props, optional=()):
-        return obj({"schema_version": {"const": f"archctl.{name}.v1"}, **props}, optional)
+        return obj({"schema_version": {"const": version(name)}, **props}, optional)
     pins = {"type": "object", "additionalProperties": sha}
     origin = enum("observed", "user_stated", "agent_inferred", "agent_chosen")
     memory_props = {"id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"},
@@ -29,8 +30,8 @@ def make_schemas() -> dict:
         optional=("components", "paths", "topics", "assumptions", "supersedes", "contradicts", "source_files", "revision"))
     memory_freshness = obj({"status": enum("current", "stale", "unverified"), "changed_paths": texts, "new_paths": texts})
     summary = contract("memory", {**memory_props, "score": number, "freshness": memory_freshness,
-        "superseded_by": {"type": ["string", "null"]}, "relevance": enum("lexical_and_scope", "related_record"),
-        "excerpt_truncated": boolean})
+        "superseded_by": {"type": ["string", "null"]}, "superseded_by_ids": texts,
+        "relevance": enum("lexical_and_scope", "related_record"), "excerpt_truncated": boolean})
     result = obj({"status": enum("passed", "failed", "unknown", "not_executed"), "message": blank,
         "returncode": {"type": ["integer", "null"]}, "duration_seconds": number,
         "stdout": blank, "stderr": blank, "output_truncated": boolean})
@@ -55,7 +56,8 @@ def make_schemas() -> dict:
             "purpose": blank, "origin": enum("provisional", "declared", "override")})),
         "potential_impact": array(obj({"id": text, "basis": text, "path": array(edge), "edit_required": {"const": False}})),
         "memories": array(summary), "decisions": array(obj({"id": text, "status": text, "path": text,
-            "rationale_excerpt": text, "excerpt_truncated": boolean, "origin": {"const": "declared"}, "score": number})),
+            "rationale_excerpt": text, "excerpt_truncated": boolean, "origin": {"const": "declared"}, "score": number,
+            "supersedes": texts, "superseded_by": texts})),
         "source_candidates": array(obj({"path": text, "start_line": {"type": "integer", "minimum": 1},
             "excerpt": blank, "origin": {"const": "source"}, "sha256": sha, "score": number,
             "components": texts, "file_excerpt_truncated": boolean, "meaning": text})),
@@ -80,11 +82,11 @@ def make_schemas() -> dict:
         "paths": {**texts, "minItems": 1}, "aliases": texts, "purpose": text}, optional=("aliases", "purpose")))})
     schemas = {"memory": memory, "context": context, "execution": execution, "context-config": config}
     for name, schema in schemas.items():
-        schema.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": f"urn:archctl:context:v1:{name}"})
+        schema.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": f"urn:archctl:context:{VERSION}:{name}"})
     return schemas
 
 
 if __name__ == "__main__":
-    destination = Path(__file__).resolve().parents[1] / "contracts/context/v1"
+    destination = Path(__file__).resolve().parents[1] / f"contracts/context/{VERSION}"
     for name, schema in make_schemas().items():
         write_json(destination / f"{name}.schema.json", schema)

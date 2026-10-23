@@ -23,6 +23,6 @@ inspection; preserve evidence gaps.
   Native Briefcase skips remain visible; unknown, partial and unexecuted never
   mean passed. npm packaging also runs npm test.
 - Preserve v2 gates in contracts/v2; advisory memory/context/execution contracts
-  live in contracts/context/v1. Keep the core independent and Atlas free of execution.
+  live in contracts/context/v2. Keep the core independent and Atlas free of execution.
 - Out of scope: hosted governance, new policy kinds, graph UI, MCP, non-Python
   mapping, tracing and placeholder implementations.

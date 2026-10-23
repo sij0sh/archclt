@@ -56,8 +56,10 @@ open_questions: []
 ```
 
 Distinguish editable scope, impacted consumers and verification scope.
-V1 requires affected components even when their files are unchanged.
-Impact does not authorize edits to every consumer.
+`scope.components` is the candidate scope; `scope.excluded_components` subtracts
+from it. Overlap is allowed, and the final set must be nonempty. V1 requires
+affected components even when their files are unchanged. Impact does not
+authorize edits to every consumer.
 `scope.paths` covers reviewed non-component files such as tests/docs;
 it cannot override component ownership or exclusions.
 Unknown IDs are errors.

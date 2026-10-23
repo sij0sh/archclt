@@ -1,19 +1,24 @@
 # Context-first implementation notes
 
-Version: 0.3.0 source update. October 23, 2026.
+Version: 0.4.0 source update. October 23, 2026.
 
 ## Implemented
 
 - Task context without model adoption, approval baseline or a maintained task contract.
 - Lexical and path/component retrieval of bounded source candidates and rationale.
 - Existing ADR rationale, including standalone ADRs without a complete governed model.
+- Decision lifecycle links, active-before-replaced ordering, and explicit limits when
+  matching decisions are omitted.
+- One shared exclusion policy for source inventory and evidence pins.
 - Automatic provisional bindings; sparse stable-ID/path/purpose overrides and rename aliases.
 - Reverse consumer/workflow impact with explanatory paths and no implied edit requirement.
 - Hypothetical import analysis, supported return paths and declared constraint references.
-- Immutable attributable memory, source pins, explicit conflicts and supersession history.
+- Immutable attributable memory, source pins, explicit conflicts and supersession history,
+  including every successor when a record has more than one.
 - Task-authorized verification and harness import using the shared bounded executor.
 - Execution outcomes separated from applicability to current inputs.
-- Updated default agent skill and independent advisory contracts, with v2 gate compatibility.
+- Updated default agent skill and advisories at the shared v2 contract version, with gate compatibility.
+- Removed v1 authoring input and migrated persisted memory records to v2.
 - Cold-start demo and regressions covering missing context, stale/conflicting memory,
   greenfield work, aliases, reuse retrieval, cycles, verification and input integrity.
 
@@ -48,4 +53,4 @@ Full controlled agent evaluations against Briefcase-only and gate-based workflow
 remain a separate empirical exercise; deterministic tests do not establish a
 measured reduction in technical debt.
 
-See [the validation record](validation-0.3.0.md) for the executed checks and skips.
+See [the validation record](validation-0.4.0.md) for the executed checks and skips.

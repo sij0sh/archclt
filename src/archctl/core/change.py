@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, digest, items, load_document, obj, relative_path,
                              stable_id, string, strings)
 from archctl.core.models import ACTIVE_DECISIONS, Snapshot
@@ -30,12 +31,17 @@ class Change:
     open_questions: tuple[str, ...]
 
     def to_dict(self) -> dict:
-        return {"schema_version": "archctl.change.v2", "id": self.id, "objective": self.objective,
+        return {"schema_version": version("change"), "id": self.id, "objective": self.objective,
                 "scope": {"components": list(self.components),
                           "excluded_components": list(self.excluded_components), "paths": list(self.paths)},
                 "acceptance": [{"id": a.id, "requirement": a.requirement, "checks": list(a.checks)} for a in self.acceptance],
                 "constraints": {"decisions": list(self.decisions), "policies": list(self.policies)},
                 "open_questions": list(self.open_questions)}
+
+    @property
+    def allowed_components(self) -> tuple[str, ...]:
+        excluded = set(self.excluded_components)
+        return tuple(component for component in self.components if component not in excluded)
 
     @property
     def revision(self) -> str:
@@ -45,14 +51,14 @@ class Change:
 def parse_change(data: object, snapshot: Snapshot) -> Change:
     keys = {"schema_version", "id", "objective", "scope", "acceptance", "constraints", "open_questions"}
     obj(data, "change", keys, keys)
-    if data["schema_version"] != "archctl.change.v2":
-        raise InputError("Expected archctl.change.v2")
+    if data["schema_version"] != version("change"):
+        raise InputError(f"Expected {version('change')}")
     scope = obj(data["scope"], "change.scope", {"components", "excluded_components", "paths"}, {"components"})
     constraints = obj(data["constraints"], "change.constraints", {"decisions", "policies"}, {"decisions", "policies"})
     components = strings(scope["components"], "scope.components", nonempty=True)
     excluded = strings(scope.get("excluded_components", []), "scope.excluded_components")
-    if set(components) & set(excluded):
-        raise InputError("Change scope includes and excludes the same component")
+    if not set(components) - set(excluded):
+        raise InputError("Change scope must include at least one component after exclusions")
     known = {c.id for c in snapshot.model.components}
     if (set(components) | set(excluded)) - known:
         raise InputError("Change scope references unknown components")

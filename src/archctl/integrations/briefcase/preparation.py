@@ -15,6 +15,7 @@ import tempfile
 import time
 
 from archctl.core.compiler import compile_model
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, contained, file_digest, load_document,
                              matches, relative_path, source_files, write_json)
 from archctl.core.models import Snapshot
@@ -249,7 +250,7 @@ def prepare_evidence(root: Path, snapshot: Snapshot, *, archctl: Path, briefcase
         manifest["elapsed_seconds"] = round(time.monotonic() - started, 4)
         write_json(destination / "manifest.json", manifest)
         export.replace(destination / "evidence.json")
-        return {"schema_version": "archctl.output.v2", "status": "written",
+        return {"schema_version": version("output"), "status": "written",
                 "output": str(destination / "evidence.json"), "manifest": str(destination / "manifest.json")}
     except (InputError, OSError, ValueError, subprocess.SubprocessError) as exc:
         manifest.update(status="error", error=str(exc), elapsed_seconds=round(time.monotonic() - started, 4))

@@ -24,7 +24,8 @@ to current inputs remain separate. Commands come from the agent's explicit task
 execution, never from a retrieved suggestion. Source identity is scoped, not an
 attestation of external dependencies or a production deployment.
 
-Advisory contracts live in `contracts/context/v1/`. The existing v2 workflow below
+Advisory contracts live in `contracts/context/v2/`. Both contract families share
+one v2 version label but remain independent. The existing governed workflow below
 remains available when reviewed architectural acceptance is explicitly selected.
 Its baseline trust and execution prerequisites apply only to governed commands.
 See ADR-005 and [the context guide](docs/context.md).
@@ -104,13 +105,13 @@ The local gate baseline is a full Git commit SHA selected after operator review.
 
 Formatting-only authoring edits change the snapshot's provenance digest but can retain the same normalized model. Such edits do not require semantic authority approval. Rationale text is part of the model; changing it does.
 
-One v2 contract family carries explicit required/advisory obligations. Model
+One shared v2 contract version carries explicit required/advisory obligations. Model
 `enforcement: strict` is the default and keeps undeclared in-scope dependencies
 blocking. Explicitly reviewed `selective` mode makes those observations advisory;
 it uses the same types, schemas and output contracts. Policy severity is display
 metadata. Trust, freshness, unresolved scope and global coverage remain required.
-Legacy v1 authoring normalizes at the input boundary; snapshots and exchange
-outputs are always v2. The explicit migration command writes a new reviewable file.
+Authoring v1 is no longer read in 0.4.0; snapshots and exchange outputs are always
+v2. Use the 0.3.0 migration command before upgrading, then review the new file.
 
 Approval is external to the tool. The tool emits `unknown` until a reviewer-controlled process establishes a new baseline. It has no `--approve` shortcut and does not write the baseline during a gate. Because Guard compares the whole normalized model, a passing gate implies unchanged authority; the skill uses that to advance a local `archctl-baseline` tag after a pass, and leaves authority changes to the operator.
 

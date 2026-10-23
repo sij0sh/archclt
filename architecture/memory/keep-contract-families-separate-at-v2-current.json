@@ -1,0 +1,37 @@
+{
+  "id": "keep-contract-families-separate-at-v2-current",
+  "statement": "Keep governed and advisory contract families and generators independent under the shared v2 version.",
+  "rationale": "ADR-005 keeps advisory context outside gate authority. A shared version label does not merge responsibilities. The two schema generators remain separate so a gate change cannot alter advisory output, or the reverse. This record refreshes the pins after the v2 schema move.",
+  "origin": "agent_inferred",
+  "references": [
+    "architecture/decisions/ADR-005.md",
+    "architecture/decisions/ADR-006.md"
+  ],
+  "components": [],
+  "paths": [
+    "scripts/generate_schemas.py",
+    "scripts/generate_context_schemas.py",
+    "architecture/decisions/ADR-006.md"
+  ],
+  "topics": [
+    "contracts",
+    "schemas",
+    "architecture",
+    "adr-005",
+    "adr-006"
+  ],
+  "assumptions": [
+    "A future breaking change to either family advances the shared version, not the other family's runtime behavior."
+  ],
+  "supersedes": [
+    "keep-contract-families-separate-at-v2"
+  ],
+  "contradicts": [],
+  "source_files": {
+    "architecture/decisions/ADR-006.md": "9aefcf2e621630c43987ab9b3e26e1ba97a8dfd81f5a46e58de45f0fddffd0e2",
+    "scripts/generate_context_schemas.py": "cc2794fcee7b4806637891260ecd6729a18dbabf14142755cbefe36d803f3e8b",
+    "scripts/generate_schemas.py": "03e50facd1811462d1d843cc41dc0b5326c8d01ce1559a8cc79d928b11ec630b"
+  },
+  "schema_version": "archctl.memory.v2",
+  "revision": "bd041430483d4f6c7d40a23162934d4274f5737bfe3d0f68310892f87c4cf3c1"
+}

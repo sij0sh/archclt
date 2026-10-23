@@ -9,16 +9,14 @@ import json
 import os
 from pathlib import Path
 import sys
-import yaml
 
 from archctl import __version__
 from archctl.atlas.impact import build_impact
 from archctl.atlas.reconcile import reconcile
 from archctl.atlas.report import markdown
-from archctl.core.enforcement import version
+from archctl.core.contracts import version
 from archctl.core.compiler import compile_model, has_authoring_model, read_snapshot
-from archctl.core.io import InputError, contained, load_document, matches, write_json, write_text
-from archctl.core.migration import migrate_document
+from archctl.core.io import InputError, contained, matches, write_json, write_text
 from archctl.core.models import ACTIVE_DECISIONS, Snapshot
 from archctl.core.change import read_change
 from archctl.cli_gate import EXIT, changed_paths, run_gate
@@ -40,7 +38,8 @@ def parser() -> argparse.ArgumentParser:
     cli = ArgumentParser(prog="archctl", description="Architectural context, memory and verification for coding agents")
     cli.add_argument("--version", action="version", version=__version__)
     cli.add_argument("--root", type=Path, default=Path("."), help="Application repository root (global option)")
-    cli.add_argument("--model-dir", default="architecture", help="Repository-relative model directory")
+    cli.add_argument("--model-dir", default="architecture",
+                     help="Governed model directory; advisory context.yaml and memory stay under architecture/")
     commands = cli.add_subparsers(dest="command", required=True)
     context_commands(commands)
     init = commands.add_parser("init", help="Create an optional governed model; context needs no initialization")
@@ -66,9 +65,6 @@ def parser() -> argparse.ArgumentParser:
     status.add_argument("--out", type=Path)
     model = commands.add_parser("model").add_subparsers(dest="operation", required=True)
     model.add_parser("validate")
-    migrate = model.add_parser("migrate", help="Convert one legacy model file to canonical v2 without overwriting it")
-    migrate.add_argument("--input", required=True, type=Path)
-    migrate.add_argument("--out", required=True, type=Path)
     compile_ = model.add_parser("compile")
     compile_.add_argument("--out", type=Path, default=Path(".archctl/candidate.lock.json"))
     decisions = commands.add_parser("decisions").add_subparsers(dest="operation", required=True)
@@ -164,7 +160,7 @@ def _emit(args: argparse.Namespace, value: dict | str, root: Path) -> None:
             write_text(path, value)
         else:
             write_json(path, value)
-        print(json.dumps({"schema_version": "archctl.output.v2", "output": str(path),
+        print(json.dumps({"schema_version": version("output"), "output": str(path),
                           "status": value.get("status", "written") if isinstance(value, dict) else "written"}))
     elif isinstance(value, str):
         print(value, end="" if value.endswith("\n") else "\n")
@@ -327,7 +323,7 @@ def _status(root: Path, model_dir: str, evidence_arg: Path | None, *, drift: boo
         status = "needs_attention"
     actions.append("Run gate with the reviewed baseline and a change contract for a task verdict")
     actions = list(dict.fromkeys(actions))
-    return {"schema_version": "archctl.status.v2", "operation": "status", "root": str(root),
+    return {"schema_version": version("status"), "operation": "status", "root": str(root),
             "status": status, "tool": {"name": "archctl", "version": __version__},
             "model": model, "evidence": evidence,
             "gate": {"status": "not_executed",
@@ -392,14 +388,6 @@ def dispatch(args: argparse.Namespace) -> int:
             args._component_paths = tuple(p for c in snapshot.model.components for p in c.paths)
         _emit(args, _status_text(report) if args.format == "text" else report, root)
         return 0 if report["status"] == "ready" else 2
-    if args.command == "model" and args.operation == "migrate":
-        source, target = _path(root, args.input), _path(root, args.out)
-        if source.resolve() == target.resolve() or target.exists():
-            raise InputError("Migration output must be a new file; review it before replacing intent")
-        value = migrate_document(load_document(source))
-        write_text(target, yaml.safe_dump(value, sort_keys=False))
-        print(json.dumps({"schema_version": "archctl.output.v2", "status": "written", "output": str(target)}))
-        return 0
     snapshot = compile_model(root, args.model_dir)
     args._protected_paths.update(contained(root, rel) for rel, _ in snapshot.sources)
     args._component_paths = tuple(p for c in snapshot.model.components for p in c.paths)
@@ -407,12 +395,12 @@ def dispatch(args: argparse.Namespace) -> int:
         change = read_change(_path(root, args.input), snapshot)
         unknowns = [f"Acceptance criterion has no verification: {a.id}" for a in change.acceptance if not a.checks]
         unknowns += [f"Open question: {q}" for q in change.open_questions]
-        _emit(args, {"schema_version": "archctl.change-validation.v2", "status": "unknown" if unknowns else "passed",
+        _emit(args, {"schema_version": version("change-validation"), "status": "unknown" if unknowns else "passed",
                      "change_revision": change.revision, "unknowns": unknowns}, root)
         return 2 if unknowns else 0
     if args.command == "model":
         _emit(args, snapshot.to_dict() if args.operation == "compile" else
-              {"schema_version": "archctl.model-validation.v2", "status": "passed",
+              {"schema_version": version("model-validation"), "status": "passed",
                "revision": snapshot.revision, "components": len(snapshot.model.components)}, root)
         return 0
     if args.command == "decisions":
@@ -421,13 +409,13 @@ def dispatch(args: argparse.Namespace) -> int:
             selected = next((d for d in decisions if d.id == args.id), None)
             if selected is None:
                 raise InputError(f"Unknown decision: {args.id}")
-            _emit(args, {"schema_version": "archctl.decision.v2", **asdict(selected)}, root)
+            _emit(args, {"schema_version": version("decision"), **asdict(selected)}, root)
         else:
             requested = set(args.components or [])
             known = {c.id for c in snapshot.model.components}
             if requested - known:
                 raise InputError(f"Unknown components: {sorted(requested - known)}")
-            _emit(args, {"schema_version": "archctl.decisions.v2", "model_revision": snapshot.revision,
+            _emit(args, {"schema_version": version("decisions"), "model_revision": snapshot.revision,
                          "decisions": [asdict(d) for d in decisions if not requested or set(d.components) & requested]}, root)
         return 0
     if args.command == "briefcase":
@@ -491,7 +479,7 @@ def main(argv: list[str] | None = None) -> int:
         args = parser().parse_args(argv)
         return dispatch(args)
     except (InputError, OSError, UnicodeError, ValueError) as exc:
-        print(json.dumps({"schema_version": "archctl.error.v2", "status": "error", "message": str(exc)}), file=sys.stderr)
+        print(json.dumps({"schema_version": version("error"), "status": "error", "message": str(exc)}), file=sys.stderr)
         return 3
     except KeyboardInterrupt:
         return 130

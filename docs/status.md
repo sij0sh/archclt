@@ -1,8 +1,9 @@
 # Support status
 
-The 0.3.0 source update makes context, architectural memory and task-authorized
-verification the normal agent workflow. These use independent advisory v1 contracts.
-The optional model/impact/guard/gate/observe workflow retains its v2 semantics.
+The 0.4.0 release makes context, architectural memory and task-authorized
+verification the normal agent workflow. These use advisory v2 contracts. The
+optional model/impact/guard/gate/observe workflow also uses v2. The two contract
+families remain independent.
 
 Supported: Python 3.11+, bounded source inventories and lexical retrieval, optional
 model/standalone ADR rationale, provisional components and rename aliases, memory

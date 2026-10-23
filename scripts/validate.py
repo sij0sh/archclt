@@ -86,9 +86,21 @@ def installed_smoke(wheel: Path) -> dict:
                                      env=env).stdout)
         independent = json.loads(command([*neutral_cli, "verify", "run", "--task", "Context smoke",
             "--paths", "architecture/model.yaml", "--command", json.dumps([sys.executable, "-c", "pass"])], env=env).stdout)
-        if (context["status"] != "assembled" or independent["result"]["status"] != "passed"
-                or independent["applicability"]["status"] != "current"):
-            raise RuntimeError("Installed context/verification required architecture adoption")
+        write_json(neutral / ".archctl/reason.json", {
+            "schema_version": "archctl.memory.v2", "id": "installed-context",
+            "statement": "Context remains advisory", "rationale": "Installed smoke checks the shared v2 label",
+            "origin": "agent_inferred", "references": ["conversation:installed-smoke"]})
+        recorded = json.loads(command([*neutral_cli, "memory", "record", "--input", ".archctl/reason.json"],
+                                      env=env).stdout)
+        memories = json.loads(command([*neutral_cli, "memory", "list"], env=env).stdout)
+        if (context["schema_version"] != "archctl.context.v2" or context["status"] != "assembled"
+                or independent["schema_version"] != "archctl.execution.v2"
+                or independent["result"]["status"] != "passed"
+                or independent["applicability"]["status"] != "current"
+                or recorded["schema_version"] != "archctl.memory-recorded.v2"
+                or memories["schema_version"] != "archctl.memories.v2"
+                or len(memories["records"]) != 1):
+            raise RuntimeError("Installed context/verification did not use the single v2 contract version")
         status = json.loads(command([*cli, "status", "--drift", "--format", "json"], env=env).stdout)
         impact = json.loads(command([*cli, "impact", "Installed-package change", "--paths", "app/orders/api.py",
                                      "--evidence", ".archctl/evidence.json"], env=env).stdout)
@@ -131,8 +143,8 @@ def installed_smoke(wheel: Path) -> dict:
             raise RuntimeError("Installed package did not complete the expected workflow")
         selective = selective_smoke(app, cli, env)
         return {"scoped_preparation": preparation, "selective_v2": selective, "status": "passed",
-                "advisory_context": context["status"], "independent_verification": independent["result"]["status"],
-                "neutral_status": neutral_status["status"], "isolated_import": True,
+                "advisory_context": context["schema_version"], "independent_verification": independent["schema_version"],
+                "memory_contract": memories["schema_version"], "neutral_status": neutral_status["status"], "isolated_import": True,
                 "status_contract": status["status"],
                 "impact": impact["assessment"], "guard": guard["status"], "workflow": workflow["status"],
                 "local_gate": gate["status"], "evaluator_source": "installed wheel",

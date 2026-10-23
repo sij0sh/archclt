@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from archctl.core.enforcement import version
+from archctl.core.contracts import version
 from archctl.core.models import Finding, Observations, Snapshot
 
 INTRA_COMPONENT_REASON = "Intra-component import is not an inter-component architectural relationship"

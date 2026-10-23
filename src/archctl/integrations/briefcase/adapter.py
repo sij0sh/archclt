@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 from typing import Any
 
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, choice, contained, file_digest, items,
                              load_document, obj, relative_path, source_files,
                              string, strings)
@@ -16,8 +17,8 @@ from archctl.core.models import (KINDS, Coverage, Edge, Evidence, Finding,
 def parse_evidence(value: Any, snapshot: Snapshot) -> Observations:
     data = obj(value, "evidence bundle", {"schema_version", "producer", "source", "coverage", "evidence", "edges"},
                {"schema_version", "producer", "source", "coverage", "evidence", "edges"})
-    if data["schema_version"] != "archctl.evidence.v2":
-        raise InputError("Expected normalized archctl.evidence.v2; native Briefcase exports need an explicit mapping")
+    if data["schema_version"] != version("evidence"):
+        raise InputError(f"Expected normalized {version('evidence')}; native Briefcase exports need an explicit mapping")
     producer = obj(data["producer"], "producer", {"name", "version"}, {"name", "version"})
     source = obj(data["source"], "source", {"revision", "files"}, {"revision", "files"})
     if not isinstance(source["files"], dict) or not source["files"]:

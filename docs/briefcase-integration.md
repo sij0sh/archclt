@@ -14,7 +14,7 @@ governed workflow. Context retains provenance and coverage without claiming a ga
 
 ## Compatible release
 
-Archclt 0.3.0 maps Briefcase 0.1.0 Python imports. Download its reviewed native
+Archclt 0.4.0 maps Briefcase 0.1.0 Python imports. Download its reviewed native
 archive and checksums from https://github.com/sij0sh/briefcase/releases/tag/v0.1.0.
 Install outside source checkouts and set `BRIEFCASE_BIN` to the absolute executable.
 Linux/macOS x64 and ARM64 have native build lanes. The producer needs Python 3.11+
@@ -53,7 +53,7 @@ The command runs Briefcase's public JSON commands. It does not read Briefcase's 
 - `neighbors` returns retained `IMPORTS` assertions.
 - `unresolved` plus `explain` classify every unresolved import from a component source file.
 
-The mapper emits a `source.files` pin for every file in the declared component paths. It accepts `exact_retained_bytes` and `ambiguous_retained_matches` only when the retained digest equals the current file bytes. A stale, missing or changed file produces a gap, not a silent pin.
+The mapper emits a `source.files` pin for every file in the declared component paths. It accepts `exact_retained_bytes` and `ambiguous_retained_matches` only when the retained digest equals the current file bytes. Missing retained bytes produce an explicit coverage gap, but the bundle still pins the current file bytes so later edits remain detectable. The pin is source identity, not proof that Briefcase analyzed the file.
 
 Only regular `.py` component files are analyzed for imports. Every other matched component file, including data or documentation matched by a component glob, produces an explicit coverage gap and keeps coverage `partial`. A retained pin proves byte identity, not dependency analysis. Files outside the declared component paths do not create component gaps.
 

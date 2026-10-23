@@ -6,6 +6,7 @@ from collections import deque
 from pathlib import Path
 
 from archctl.core.context import Binding, terms
+from archctl.core.contracts import version
 from archctl.core.io import InputError, contained, digest, file_digest, matches
 from archctl.core.memory import Memory, freshness as memory_freshness
 from archctl.core.models import Observations, Snapshot, owners
@@ -13,6 +14,19 @@ from archctl.core.models import Observations, Snapshot, owners
 
 def _score(task_terms: set[str], text: str) -> int:
     return len(task_terms & terms(text))
+
+
+def _decision_rank(item: dict) -> int:
+    if item["status"] == "superseded" or item["superseded_by"]:
+        return 4
+    return {"accepted": 0, "deprecated": 1, "proposed": 2, "rejected": 3}.get(item["status"], 2)
+
+
+def _sort_decisions(items: list[dict]) -> None:
+    # Score is primary; lifecycle breaks ties and demotes replaced records.
+    items.sort(key=lambda item: item["id"], reverse=True)
+    items.sort(key=lambda item: _decision_rank(item))
+    items.sort(key=lambda item: -item["score"])
 
 
 def _path_match(paths: list[str], patterns: tuple[str, ...]) -> bool:
@@ -148,7 +162,14 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         if missing:
             gaps.append({"category": "coverage", "affects": sorted(missing),
                          "message": "These task components lack declared dependency analysis coverage"})
-    superseded = {old: r.id for r in memories for old in r.supersedes}
+    successors: dict[str, list[str]] = {}
+    for record in memories:
+        for old in record.supersedes:
+            successors.setdefault(old, []).append(record.id)
+    successors = {key: sorted(set(value)) for key, value in successors.items()}
+    def successor_values(record_id: str) -> tuple[str | None, list[str]]:
+        values = successors.get(record_id, [])
+        return (values[0] if values else None), values
     ranked = []
     for record in memories:
         components = {aliases.get(c, c) for c in record.components}
@@ -157,8 +178,9 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         if not score:
             continue
         value = record.to_dict()
+        primary, ids = successor_values(record.id)
         value.update(score=score, freshness=memory_freshness(root, record),
-                     superseded_by=superseded.get(record.id), relevance="lexical_and_scope")
+                     superseded_by=primary, superseded_by_ids=ids, relevance="lexical_and_scope")
         ranked.append((score, record.id, value))
     selected_ids = {row[1] for row in ranked}
     # Contradicting and replacement context travels with a match, not only on lexical coincidence.
@@ -166,8 +188,9 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         if record.id not in selected_ids and (set(record.contradicts) & selected_ids or set(record.supersedes) & selected_ids
                 or any(record.id in {*r.contradicts, *r.supersedes} for r in memories if r.id in selected_ids)):
             value = record.to_dict()
+            primary, ids = successor_values(record.id)
             value.update(score=0, freshness=memory_freshness(root, record),
-                         superseded_by=superseded.get(record.id), relevance="related_record")
+                         superseded_by=primary, superseded_by_ids=ids, relevance="related_record")
             ranked.append((0, record.id, value))
     ranked.sort(key=lambda row: (row[2]["superseded_by"] is not None, -row[0], row[1]))
     memory_items = [row[2] for row in ranked[:limit]]
@@ -182,6 +205,15 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         if item["contradicts"]:
             concerns.append({"kind": "conflicting_reasoning", "references": [item["id"], *item["contradicts"]],
                              "message": "Preserve both accounts and resolve their assumptions in the current task"})
+    decision_successors: dict[str, list[str]] = {}
+    for decision in (snapshot.model.decisions if snapshot else decision_notes or []):
+        if isinstance(decision, dict):
+            ident, supersedes = decision["id"], decision.get("supersedes", [])
+        else:
+            ident, supersedes = decision.id, decision.supersedes
+        for old in supersedes:
+            decision_successors.setdefault(old, []).append(ident)
+    decision_successors = {key: sorted(set(value)) for key, value in decision_successors.items()}
     decisions, checks = [], []
     if not snapshot:
         for decision in decision_notes or []:
@@ -189,16 +221,20 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
             if score or set(decision["components"]) & active_scope:
                 decisions.append({"id": decision["id"], "status": decision["status"], "path": decision["path"],
                     "rationale_excerpt": decision["body"][:3000], "excerpt_truncated": len(decision["body"]) > 3000,
-                    "origin": "declared", "score": score})
-        decisions.sort(key=lambda d: (-d["score"], d["id"]))
+                    "origin": "declared", "score": score,
+                    "supersedes": list(decision.get("supersedes", [])),
+                    "superseded_by": decision_successors.get(decision["id"], [])})
+        _sort_decisions(decisions)
     if snapshot:
         for decision in snapshot.model.decisions:
             score = _score(query, decision.title + " " + decision.body)
             if score or set(decision.components) & active_scope:
                 decisions.append({"id": decision.id, "status": decision.status, "path": decision.path,
                     "rationale_excerpt": decision.body[:3000], "excerpt_truncated": len(decision.body) > 3000,
-                    "origin": "declared", "score": score})
-        decisions.sort(key=lambda d: (-d["score"], d["id"]))
+                    "origin": "declared", "score": score,
+                    "supersedes": list(decision.supersedes),
+                    "superseded_by": decision_successors.get(decision.id, [])})
+        _sort_decisions(decisions)
         for check in snapshot.model.verification:
             if set(check.components) & active_scope or _score(query, check.id):
                 checks.append({"id": check.id, "command": list(check.command), "cwd": check.cwd,
@@ -210,6 +246,9 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
                     "message": f"Observed dependency contradicts {policy.id}",
                     "evidence_refs": sorted({r for e in violations for r in e["evidence_refs"]}),
                     "freshness": "stale" if stale_evidence else "current"})
+    if len(decisions) > limit:
+        gaps.append({"category": "scope", "affects": ["decisions"],
+                     "message": f"Decision retrieval returned {limit} of {len(decisions)} matching decisions; raise --limit or inspect the full decision inventory"})
     hypothetical = []
     for source, target in proposals:
         imports = [e for e in edges if e["kind"] == "imports"]
@@ -228,7 +267,7 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
     refs = {ref for edge in relevant_edges[:limit] for ref in edge["evidence_refs"]}
     refs.update(ref for item in hypothetical for edge in item["return_path"] for ref in edge["evidence_refs"])
     refs.update(ref for item in list(affected.values())[:limit] for edge in item["path"] for ref in edge["evidence_refs"])
-    packet = {"schema_version": "archctl.context.v1", "status": "assembled", "task": task,
+    packet = {"schema_version": version("context"), "status": "assembled", "task": task,
         "planned_paths": paths, "context_references": context_refs or [],
         "components": binding_items[:limit], "potential_impact": [affected[k] for k in sorted(affected)][:limit],
         "memories": memory_items, "decisions": decisions[:limit], "source_candidates": snippets,
@@ -258,10 +297,15 @@ def markdown(packet: dict) -> str:
     for m in packet["memories"]:
         lines += [f"### {m['id']} ({m['origin']}, {m['freshness']['status']})", "", m["statement"], "", m["rationale"], "",
                   "References: " + ", ".join(m["references"]), ""]
-        if m["superseded_by"]:
-            lines += ["Superseded by: " + m["superseded_by"], ""]
+        successors = m.get("superseded_by_ids") or ([m["superseded_by"]] if m.get("superseded_by") else [])
+        if successors:
+            lines += ["Superseded by: " + ", ".join(successors), ""]
     for d in packet["decisions"]:
         lines += [f"### {d['id']} ({d['status']})", "", d["rationale_excerpt"], "", f"Source: `{d['path']}`", ""]
+        if d.get("supersedes"):
+            lines += ["Supersedes: " + ", ".join(d["supersedes"]), ""]
+        if d.get("superseded_by"):
+            lines += ["Superseded by: " + ", ".join(d["superseded_by"]), ""]
     lines += ["## Source candidates", ""]
     for s in packet["source_candidates"]:
         lines += [f"- `{s['path']}` from line {s['start_line']}; read source for full context.", ""]

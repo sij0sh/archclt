@@ -30,6 +30,6 @@
     "scripts/generate_context_schemas.py": "34ab9cbabcaba2e3a4fedf8709241e545ed45c254c8ef5509b3ee8dcc3d7be2c",
     "scripts/generate_schemas.py": "f7a7c16c6bbf46a50ff4d18cb6385ec0410663b6cf373b96fb58f4865efdc3b4"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "f68c6452ceae253d3cf1269491cc97c6da3f04f4d471d5223fa50f02524d16b5"
+  "schema_version": "archctl.memory.v2",
+  "revision": "cf6dd73ae596aca2fb14d7433c1f1f985ca32d143423851b6a8b806bac5c53c9"
 }

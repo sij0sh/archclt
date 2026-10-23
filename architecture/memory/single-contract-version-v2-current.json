@@ -1,0 +1,37 @@
+{
+  "id": "single-contract-version-v2-current",
+  "statement": "Use v2 as the only public contract version and remove v1 in 0.4.0.",
+  "rationale": "The user requested one contract version with v1 removed and v2 renamed. V2 is the only safe survivor because the v1 label already denotes incompatible legacy authoring and old adapter payloads. The 0.3.0 release remains the authoring migration bridge. Governed and advisory families keep separate generators and consumer promises. This record refreshes the pins after documentation and schema edits.",
+  "origin": "agent_chosen",
+  "references": [
+    "architecture/decisions/ADR-006.md",
+    "CHANGELOG.md"
+  ],
+  "components": [],
+  "paths": [
+    "architecture/decisions/ADR-006.md",
+    "src/archctl/core/contracts.py",
+    "CHANGELOG.md"
+  ],
+  "topics": [
+    "contracts",
+    "versioning",
+    "v2",
+    "migration",
+    "adr-006"
+  ],
+  "assumptions": [
+    "Consumers that still need v1 authoring can migrate with 0.3.0 before upgrading."
+  ],
+  "supersedes": [
+    "single-contract-version-v2"
+  ],
+  "contradicts": [],
+  "source_files": {
+    "CHANGELOG.md": "ff52406b2185819decadbbe560e045134cad9661dbaeec8c7f459a0be4398c0a",
+    "architecture/decisions/ADR-006.md": "9aefcf2e621630c43987ab9b3e26e1ba97a8dfd81f5a46e58de45f0fddffd0e2",
+    "src/archctl/core/contracts.py": "8312cb3a61ffbbda0f29c90bef92e640e1b416aae696bab7d484c2d84afadf3f"
+  },
+  "schema_version": "archctl.memory.v2",
+  "revision": "6563cd2c8db908c9f9a9b8236b2ddd8528168a66a4184fb3f935575de5728093"
+}

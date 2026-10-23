@@ -28,6 +28,6 @@
     "src/archctl/core/models.py": "c6b2812061a1703ce059f510901db4a4b35419feaaa0ddab6e11ddb08c91b8b5",
     "tests/test_check_architecture.py": "4ecac155b792a5c057c519b696e947ad8cdf21048160558c167158200d419d3e"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "c63321952ace84cee2f8818b3ae1af6be1ba092c1eb9504462a32cecb31b49d6"
+  "schema_version": "archctl.memory.v2",
+  "revision": "f240ef0770708b99ce12ddd147f1f428afa2bbbf44fddf2a2127c9ab9d905246"
 }

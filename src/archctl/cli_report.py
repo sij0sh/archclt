@@ -32,9 +32,13 @@ def markdown(summary: dict) -> str:
                   markdown_cell(summary.get("guarantee", ""))]
     if summary.get("support"):
         lines += ["", "Support: " + markdown_cell(summary["support"]["limitation"])]
-    lines += ["", "## Acceptance checks", "", "| Criterion | Status | Checks |", "|---|---|---|"]
-    for item in summary.get("acceptance", []):
-        lines.append(f"| {markdown_cell(item['id'])}: {markdown_cell(item['requirement'])} | {item['status']} | {markdown_cell(', '.join(item['checks']))} |")
+    lines += ["", "## Acceptance checks", ""]
+    if summary.get("acceptance"):
+        lines += ["| Criterion | Status | Checks |", "|---|---|---|"]
+        for item in summary["acceptance"]:
+            lines.append(f"| {markdown_cell(item['id'])}: {markdown_cell(item['requirement'])} | {item['status']} | {markdown_cell(', '.join(item['checks']))} |")
+    else:
+        lines += ["Task acceptance: not assessed (no Change Contract supplied)."]
     lines += ["", "## Verification", "", "| Check | Obligation | Status | Command | Required by |",
               "|---|---|---|---|---|"]
     for item in summary.get("verification", []):

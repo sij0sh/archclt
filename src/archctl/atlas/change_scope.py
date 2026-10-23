@@ -11,7 +11,7 @@ from archctl.core.models import Snapshot, owners
 def apply_change(change: Change, snapshot: Snapshot, baseline: Snapshot, impact: dict) -> dict:
     """Return a new impact contract; no task can authorize an architecture edit."""
     gaps = list(impact["unknowns"])
-    allowed = set(change.components)
+    allowed = set(change.allowed_components)
     affected = {c["id"] for c in impact["affected_components"]}
     for component in sorted(affected - allowed):
         gaps.append(f"Affected component is outside reviewed change scope: {component}")

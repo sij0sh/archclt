@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from archctl.core.io import matches
+from archctl.core.contracts import version
 
 KINDS = {"imports", "calls", "reads", "writes", "publishes", "consumes"}
 ACTIVE_DECISIONS = {"accepted", "deprecated"}
@@ -122,7 +123,7 @@ class Snapshot:
     sources: tuple[tuple[str, str], ...]
 
     def to_dict(self) -> dict:
-        return {"schema_version": "archctl.snapshot.v2", "revision": self.revision,
+        return {"schema_version": version("snapshot"), "revision": self.revision,
                 "model": self.model.to_dict(), "sources": dict(self.sources)}
 
 
@@ -176,7 +177,7 @@ class Observations:
 
     def to_dict(self) -> dict:
         import json
-        return json.loads(json.dumps({"schema_version": "archctl.evidence.v2",
+        return json.loads(json.dumps({"schema_version": version("evidence"),
                 "producer": {"name": self.producer, "version": self.producer_version},
                 "source": {"revision": self.source_revision, "files": dict(self.files)},
                 "coverage": asdict(self.coverage), "evidence": [asdict(e) for e in self.evidence],

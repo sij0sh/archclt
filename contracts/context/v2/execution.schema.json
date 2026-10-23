@@ -1,5 +1,5 @@
 {
-  "$id": "urn:archctl:context:v1:execution",
+  "$id": "urn:archctl:context:v2:execution",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -87,7 +87,7 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "archctl.execution.v1"
+      "const": "archctl.execution.v2"
     },
     "source": {
       "additionalProperties": false,

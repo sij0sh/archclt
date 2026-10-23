@@ -18,7 +18,8 @@ from archctl.atlas.change_scope import acceptance_results, apply_change
 from archctl.atlas.impact import build_impact
 from archctl.atlas.reconcile import reconcile
 from archctl.cli_report import markdown, overall_status
-from archctl.core.enforcement import GUARANTEE, version
+from archctl.core.contracts import version
+from archctl.core.enforcement import GUARANTEE
 from archctl.core.change import read_change
 from archctl.core.compiler import compile_model
 from archctl.core.io import InputError, contained, digest, file_digest, load_document, write_json, write_text
@@ -98,7 +99,7 @@ def blocking_drift(snapshot, observations, report: dict, affected: set[str]) -> 
 def evaluate(request: dict) -> int:
     """Executed only in the selected evaluator's fresh Python process."""
     root, report, baseline_root = (Path(request[k]) for k in ("root", "report", "baseline_root"))
-    summary = {"schema_version": "archctl.gate.v2", "status": "unknown",
+    summary = {"schema_version": version("gate"), "status": "unknown",
                "baseline_sha": request["baseline_sha"], "head_sha": _git(root, "rev-parse", "HEAD"),
                "candidate_dirty": bool(changed_paths(root, "HEAD")), "scope": request["scope"],
                "evaluator": request["evaluator"], "approval": "not_assessed", "stages": {},
@@ -163,7 +164,7 @@ def evaluate(request: dict) -> int:
                       required_policies=set(change.policies) if change else set())
         write_json(report / "guard.json", guard)
         criteria = acceptance_results(change, guard["verification"]) if change else []
-        contract_status = overall_status(*(c["status"] for c in criteria)) if change else "passed"
+        contract_status = overall_status(*(c["status"] for c in criteria)) if change else None
         stability_status = "passed"
         if change_path and (not change_path.is_file() or file_digest(change_path) != change_pin):
             stability_status = "unknown"
@@ -172,8 +173,10 @@ def evaluate(request: dict) -> int:
             stability_status = "unknown"
             summary["findings"].append({"status": "unknown", "message": "Changed path inventory or contents changed during verification; rerun"})
         stages = {"evidence": validation["status"], "guard": guard["status"],
-                  "drift": overall_status(*(f["status"] for f in drift)) if drift else "passed",
-                  "acceptance": contract_status, "stability": stability_status}
+                  "drift": overall_status(*(f["status"] for f in drift)) if drift else "passed"}
+        if contract_status is not None:
+            stages["acceptance"] = contract_status
+        stages["stability"] = stability_status
         summary.update(status=overall_status(*stages.values()), stages=stages,
                        source_revision=observations.source_revision, source_digest=observations.source_digest,
                        authority_changed=guard["authority_changed"], acceptance=criteria,
@@ -251,12 +254,12 @@ def run_gate(root: Path, args) -> tuple[int, dict]:
             summary = load_document(summary_file)
             if result.returncode != EXIT.get(summary.get("status")):
                 raise InputError("Evaluator exit and reported status disagree")
-            return result.returncode, {"schema_version": "archctl.gate-output.v2", "status": summary["status"],
+            return result.returncode, {"schema_version": version("gate-output"), "status": summary["status"],
                                        "baseline_sha": sha, "report": str(report)}
         except (InputError, OSError, ValueError) as exc:
-            _save(report, {"schema_version": "archctl.gate.v2", "status": "error", "baseline_sha": sha,
+            _save(report, {"schema_version": version("gate"), "status": "error", "baseline_sha": sha,
                            "approval": "not_assessed", "stages": {}, "error": str(exc)})
-            return 3, {"schema_version": "archctl.gate-output.v2", "status": "error", "report": str(report), "message": str(exc)}
+            return 3, {"schema_version": version("gate-output"), "status": "error", "report": str(report), "message": str(exc)}
         finally:
             if worktree.exists():
                 subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", str(worktree)], capture_output=True)

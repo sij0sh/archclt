@@ -1,5 +1,5 @@
 {
-  "$id": "urn:archctl:context:v1:memory",
+  "$id": "urn:archctl:context:v2:memory",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -67,7 +67,7 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "archctl.memory.v1"
+      "const": "archctl.memory.v2"
     },
     "source_files": {
       "additionalProperties": {

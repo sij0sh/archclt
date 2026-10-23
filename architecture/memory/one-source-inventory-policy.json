@@ -31,6 +31,6 @@
     "src/archctl/core/context.py": "45c85b1c1c27adfc564dadd1ec1ef0226c772123eda940560385e31c9788937e",
     "src/archctl/core/io.py": "e0588df720150615b019321d156b4c36ab11aee60a506ec14c5beec1af96cdb9"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "9aaf47f11d544e3d7cd800c7dad649fdcb6a3d8871a069a94e4d87f48a1141e8"
+  "schema_version": "archctl.memory.v2",
+  "revision": "18788154ff8be43e058b52e0bf2428a8133ad8ed17e93c5acc124ecc64ef929c"
 }

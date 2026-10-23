@@ -17,11 +17,12 @@ import re
 import subprocess
 from typing import Any, Iterator
 
+from archctl.core.contracts import version
 from archctl.core.io import (InputError, contained, file_digest, matches,
                              source_files)
 from archctl.core.models import Snapshot, owners
 
-SCHEMA = "archctl.evidence.v2"
+SCHEMA = version("evidence")
 PRODUCER = "briefcase-native-exporter"
 SUPPORT = {"profile": "briefcase-0.1.0-python-imports", "languages": ["python"], "predicates": ["imports"],
            "limitation": "Only Python import edges are assessed. Other languages, dynamic imports and runtime structure are not."}

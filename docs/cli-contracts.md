@@ -5,7 +5,7 @@
 ## Default context and verification commands
 
 `context`, `memory` and `verify` use the advisory contracts under
-`contracts/context/v1`; [the context guide](context.md) documents their input
+`contracts/context/v2`; [the context guide](context.md) documents their input
 formats. They require no baseline or approved model. Context exit 0 means
 `assembled`, including useful packets with partial evidence. `memory record`
 appends an immutable reason with provenance and returns `recorded`.
@@ -23,9 +23,15 @@ and gate workflow, whose contracts are preserved for compatibility.
 
 - JSON is written to stdout. Errors are written to stderr as one `archctl.error.v2` object.
 - Global options precede the command: `archctl [--root R] [--model-dir DIR] <command>`.
+  `--model-dir` selects the governed model and ADRs; advisory `architecture/context.yaml`
+  and `architecture/memory/` remain repository-level.
 - Relative paths resolve against `--root`. Paths in JSON are repository-relative when they are inside the root.
-- Every versioned object has a `schema_version`. Within a major version, fields may be added. Consumers must ignore unknown fields. Removing or renaming a field requires a new version.
-- Every model emits unified `archctl.*.v2` objects. `enforcement: strict` is the default; `selective` changes undeclared-drift treatment without changing contract versions.
+- Every versioned object has a `schema_version`. All public contracts share one version.
+  Within v2, archctl output may add fields; output consumers must ignore fields they
+  do not recognize. Archctl input parsers are strict: unknown input fields are rejected
+  so typos and unsupported extensions stay visible. Removing or renaming an output
+  field, or changing its meaning, requires a new shared version.
+- Every model emits `archctl.*.v2` objects. `enforcement: strict` is the default; `selective` changes undeclared-drift treatment without changing contract versions.
 - `--out` writes the object atomically and prints an `archctl.output.v2` acknowledgement. Without `--out`, the object is printed to stdout.
 - `status`, `model validate`, `decisions`, `impact` and read-only views do not approve architecture. `gate` is the composite local result for feature handoff; `guard check` remains a lower-level policy/test operation whose pass does not imply complete task verification.
 - `unknown`, `not_executed`, `partial`, stale evidence and a missing baseline are never converted to `passed`.
@@ -117,7 +123,7 @@ Shape:
   "operation": "status",
   "root": "/absolute/repository/root",
   "status": "ready",
-  "tool": {"name": "archctl", "version": "0.3.0"},
+  "tool": {"name": "archctl", "version": "0.4.0"},
   "model": {
     "state": "valid",
     "directory": "architecture",
@@ -354,7 +360,8 @@ required test failure is failed even when other stages are unknown; otherwise
 all stages must pass. Missing optional relationships and unrelated drift are
 retained as informational. Runtime/global coverage limitations remain explicit.
 Without `--change`, the result is an architectural audit and makes no acceptance
-claim. A default changed-scope run with no delta remains unknown.
+claim; the acceptance stage is omitted rather than reported as passed. A default
+changed-scope run with no delta remains unknown.
 
 The low-level `guard check --baseline SNAPSHOT` remains supported, but the caller
 must independently supply a trusted evaluator. It does not replace `gate`.
@@ -368,21 +375,23 @@ must independently supply a trusted evaluator. It does not replace `gate`.
 Validates `archctl.change.v2` against current component, active decision, policy
 and verification IDs. Emits `archctl.change-validation.v2`: `status`,
 `change_revision`, `unknowns`. Unknown IDs, duplicate criteria, extra fields and
-contradictory scope are errors. Unmapped criteria and open questions are unknown.
-Validation does not review task intent, compare actual changed paths or execute
-tests. The gate performs those additional comparisons and execution.
+an empty final component scope are errors. Unmapped criteria and open questions
+are unknown. Validation does not review task intent, compare actual changed paths
+or execute tests. The gate performs those additional comparisons and execution.
 
+`scope.components` is the candidate component scope. `scope.excluded_components`
+subtracts from it; overlap is allowed, and the final set must be nonempty.
 `scope.paths` is optional and uses repository-relative POSIX globs to include
 reviewed non-component files. It cannot excuse a component outside scope. The
 operator reviews the contract; the tool records its digest without authenticating
 approval. See `change.schema.json` and the skill's intake reference for the complete format.
 
-## model migrate
+## Legacy authoring
 
-`archctl model migrate --input OLD --out NEW` converts one legacy authoring
-file to v2. NEW must be a new file; the command preserves OLD. Review the
-result and baseline change before adopting it. Regenerate legacy evidence,
-change contracts and compiled snapshots; ordinary commands accept v2 exchanges.
+The 0.4.0 CLI has no `model migrate` command and rejects `archctl.authoring.v1`.
+To migrate an older model, run `archctl model migrate` from 0.3.0, review the
+new file, then upgrade. Regenerate legacy evidence, change contracts and compiled
+snapshots; ordinary commands accept only v2 exchanges.
 
 The npm launcher also provides `setup`, `--runtime-path` and
 `install-skill <agent-skills-directory>`; these provision the distribution and

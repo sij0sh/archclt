@@ -1,5 +1,5 @@
 {
-  "$id": "urn:archctl:context:v1:context",
+  "$id": "urn:archctl:context:v2:context",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -136,6 +136,22 @@
           "status": {
             "minLength": 1,
             "type": "string"
+          },
+          "superseded_by": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "supersedes": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
           }
         },
         "required": [
@@ -145,7 +161,9 @@
           "path",
           "rationale_excerpt",
           "score",
-          "status"
+          "status",
+          "superseded_by",
+          "supersedes"
         ],
         "type": "object"
       },
@@ -311,7 +329,7 @@
             "type": "string"
           },
           "schema_version": {
-            "const": "archctl.execution.v1"
+            "const": "archctl.execution.v2"
           },
           "source": {
             "additionalProperties": false,
@@ -537,7 +555,7 @@
             "type": "string"
           },
           "schema_version": {
-            "const": "archctl.memory.v1"
+            "const": "archctl.memory.v2"
           },
           "score": {
             "minimum": 0,
@@ -560,6 +578,14 @@
               "string",
               "null"
             ]
+          },
+          "superseded_by_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
           },
           "supersedes": {
             "items": {
@@ -596,6 +622,7 @@
           "source_files",
           "statement",
           "superseded_by",
+          "superseded_by_ids",
           "supersedes",
           "topics"
         ],
@@ -891,7 +918,7 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "archctl.context.v1"
+      "const": "archctl.context.v2"
     },
     "source": {
       "additionalProperties": false,

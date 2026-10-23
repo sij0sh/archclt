@@ -1,0 +1,35 @@
+{
+  "id": "migrate-memory-serialization-not-reasoning",
+  "statement": "Migrate persisted memory records by changing only schema version and revision.",
+  "rationale": "Memory records are durable attributed reasoning. Moving them to the shared v2 label is a serialization migration, not permission to rewrite statements, rationale, origin, references, assumptions or source pins. The one-time script verifies the old revision before writing and recomputes the new revision.",
+  "origin": "agent_chosen",
+  "references": [
+    "architecture/decisions/ADR-006.md",
+    "scripts/migrate_memory_v2.py",
+    "src/archctl/core/memory.py"
+  ],
+  "components": [],
+  "paths": [
+    "scripts/migrate_memory_v2.py",
+    "src/archctl/core/memory.py",
+    "architecture/decisions/ADR-006.md"
+  ],
+  "topics": [
+    "memory",
+    "migration",
+    "immutability",
+    "v2"
+  ],
+  "assumptions": [
+    "The migration changes no user or agent reasoning and Git history retains the old revisions."
+  ],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "architecture/decisions/ADR-006.md": "9aefcf2e621630c43987ab9b3e26e1ba97a8dfd81f5a46e58de45f0fddffd0e2",
+    "scripts/migrate_memory_v2.py": "a91d98d3d2dd9de45accd849e222b65fda6871c32024acf5eaae182d2ee0ad12",
+    "src/archctl/core/memory.py": "8f1469c1804ccf3c761f04f66a8290188770048e3196f5e6760389e8dc031375"
+  },
+  "schema_version": "archctl.memory.v2",
+  "revision": "5f932c7e2afe4c7b2129b99cd68b5e2f247d890b87e213c5b2ffaf0aaaf2dd39"
+}

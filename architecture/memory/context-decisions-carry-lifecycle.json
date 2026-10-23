@@ -32,6 +32,6 @@
     "src/archctl/atlas/context.py": "ba9ad110c66d515f04a1ba5cdeba03ba594a7aa9b6703a5121dd5e2cc3ce6208",
     "src/archctl/core/context.py": "45c85b1c1c27adfc564dadd1ec1ef0226c772123eda940560385e31c9788937e"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "61f18d1e382c7e854eced461e4c9bc30843550ba4276c21230ceab74ef49cf74"
+  "schema_version": "archctl.memory.v2",
+  "revision": "f8e1c5c41f9bdc65b21059c7dc6f4a61aef39bd25bff48b41aaf9a3e9c7a1e43"
 }

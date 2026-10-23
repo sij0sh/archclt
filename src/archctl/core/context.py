@@ -8,7 +8,8 @@ from pathlib import Path
 import re
 
 from archctl.core.compiler import parse_decision
-from archctl.core.io import (InputError, SKIP, contained, digest, load_document, obj,
+from archctl.core.contracts import version
+from archctl.core.io import (InputError, contained, digest, excluded, load_document, obj,
                              relative_path, stable_id, string, strings)
 from archctl.core.models import Snapshot, owners
 
@@ -32,14 +33,14 @@ class Binding:
 def inventory(root: Path, limit: int = 4000) -> tuple[list[str], bool]:
     files = []
     for directory, dirs, names in os.walk(root, followlinks=False):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP and not d.startswith(".")
-                         and not (Path(directory) / d).is_symlink() and not d.endswith(".egg-info"))
+        dirs[:] = sorted(d for d in dirs
+                         if not excluded((Path(directory) / d).relative_to(root).as_posix())
+                         and not (Path(directory) / d).is_symlink())
         for name in sorted(names):
             path = Path(directory) / name
-            if name.startswith(".") or path.is_symlink() or path.suffix.lower() not in CODE | {".md", ".yaml", ".yml", ".toml", ".json"}:
-                continue
             rel = path.relative_to(root).as_posix()
-            if rel.startswith("architecture/memory/"):
+            if (excluded(rel) or path.is_symlink()
+                    or path.suffix.lower() not in CODE | {".md", ".yaml", ".yml", ".toml", ".json"}):
                 continue
             files.append(rel)
             if len(files) == limit:
@@ -55,8 +56,8 @@ def load_bindings(root: Path, snapshot: Snapshot | None, files: list[str],
     if config.is_file():
         data = obj(load_document(config), "context config", {"schema_version", "components"},
                    {"schema_version", "components"})
-        if data["schema_version"] != "archctl.context-config.v1" or not isinstance(data["components"], list):
-            raise InputError("Expected archctl.context-config.v1 and a components list")
+        if data["schema_version"] != version("context-config") or not isinstance(data["components"], list):
+            raise InputError(f"Expected {version('context-config')} and a components list")
         seen = set()
         for item in data["components"]:
             v = obj(item, "context component", {"id", "paths", "aliases", "purpose"}, {"id", "paths"})
@@ -100,13 +101,14 @@ def terms(text: str) -> set[str]:
     return {t.lower() for t in re.findall(r"[A-Za-z][A-Za-z0-9]{2,}", text) if t.lower() not in stop}
 
 
-def decision_notes(root: Path, directory: str) -> list[dict]:
+def decision_notes(root: Path, directory: str) -> tuple[list[dict], list[str]]:
     """Read existing rationale even when no complete governed model exists."""
-    result = []
-    for path in sorted(contained(root, f"{directory}/decisions").glob("*.md"))[:100]:
+    result, gaps = [], []
+    for path in sorted(contained(root, f"{directory}/decisions").glob("*.md")):
         rel = path.relative_to(root).as_posix()
         path = contained(root, rel)
         if path.stat().st_size > 65536:
+            gaps.append(f"Decision record exceeds 65536 bytes and was skipped: {rel}")
             continue
         text = path.read_text(encoding="utf-8")
         try:
@@ -116,7 +118,10 @@ def decision_notes(root: Path, directory: str) -> list[dict]:
         components = front.get("components", [])
         if not isinstance(components, list) or any(not isinstance(c, str) for c in components):
             components = []
+        supersedes = front.get("supersedes", [])
+        if not isinstance(supersedes, list) or any(not isinstance(c, str) for c in supersedes):
+            supersedes = []
         result.append({"id": str(front.get("id", path.stem)), "status": str(front.get("status", "unclassified")),
             "title": str(front.get("title", path.stem)), "path": rel, "body": body,
-            "components": components})
-    return result
+            "components": components, "supersedes": supersedes})
+    return result, gaps

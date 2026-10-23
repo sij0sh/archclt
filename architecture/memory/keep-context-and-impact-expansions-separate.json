@@ -26,6 +26,6 @@
     "src/archctl/atlas/context.py": "ba9ad110c66d515f04a1ba5cdeba03ba594a7aa9b6703a5121dd5e2cc3ce6208",
     "src/archctl/atlas/impact.py": "82850696f1adce0acfe400c1cf5b9652405326fa340162a01573eb6fee2bc7c5"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "f5815669206c8b9115bee80abcae1b073e0a34d9c049041a360e0dd502cb61f4"
+  "schema_version": "archctl.memory.v2",
+  "revision": "f77eab0cb6c3bd18e466817f1a0a9c870cf7c92e7d48ce52c070353e05bb2496"
 }

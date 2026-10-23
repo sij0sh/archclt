@@ -16,7 +16,9 @@ archctl context 'Change the response shape' --changed
 
 JSON is the default. `--format markdown` produces a readable briefing. `--out`
 writes a **new** file under `.archctl/`; it cannot overwrite source or earlier
-packets. Global `--root` and `--model-dir` precede the command.
+packets. Global `--root` and `--model-dir` precede the command. `--model-dir`
+moves the governed model and its ADRs only; advisory `architecture/context.yaml`
+and `architecture/memory/` remain repository-level.
 
 The packet includes scoped components, possible consumers, rationale excerpts,
 source candidates with hashes, proposed dependencies, check suggestions, prior
@@ -52,9 +54,12 @@ retrieved by the agent. References are opaque provenance, not automatically
 fetched conversations. Preserve user statements separately from interpretations.
 Unavailable conversations cannot be reconstructed as remembered fact.
 
-Existing models and standalone ADRs contribute rationale. An invalid optional
-model limits context rather than preventing it. Malformed explicitly supplied
-evidence and malformed memory records remain input errors.
+Existing models and standalone ADRs contribute rationale. Decision rows include
+`supersedes` and `superseded_by` links. When more matching decisions exist than
+the section limit, the packet reports the omission and includes an explicit
+limitation. An invalid optional model limits context rather than preventing it.
+Malformed explicitly supplied evidence and malformed memory records remain input
+errors.
 
 ## Components and planned dependencies
 
@@ -62,7 +67,7 @@ Unbound source/planned files receive provisional IDs grouped by directory.
 Optional `architecture/context.yaml` overrides stabilize identities:
 
 ```yaml
-schema_version: archctl.context-config.v1
+schema_version: archctl.context-config.v2
 components:
   - id: worker-runtime
     paths: [src/worker/**]
@@ -92,7 +97,7 @@ Create `.archctl/reason.json` from the session:
 
 ```json
 {
-  "schema_version": "archctl.memory.v1",
+  "schema_version": "archctl.memory.v2",
   "id": "worker-batching-lifetime",
   "statement": "Extract pure batching before sharing it with workers",
   "rationale": "The API helper holds request state; concurrent jobs have a different lifetime.",
@@ -117,10 +122,17 @@ facts regenerable from source. No approval lifecycle is involved.
 
 Records are immutable. Identical retries keep original pins. Use a new ID and
 `supersedes: [old-id]` for a revised choice or `contradicts: [other-id]` for an
-unresolved conflict. Referenced records must exist and remain readable.
+unresolved conflict. A record may have multiple successors; all are reported in
+`superseded_by_ids`. Referenced records must exist and remain readable.
 Freshness describes changed implementation inputs, not the truth of user intent.
 Repeated inferences never become user statements. Semantic contradiction analysis
 belongs to the agent; the tool tracks explicit links and changed inputs.
+
+0.4.0 stores records as `archctl.memory.v2`. To migrate records written by 0.3.0,
+run `PYTHONPATH=src python3 scripts/migrate_memory_v2.py architecture/memory`
+from the 0.4.0 source archive. The script changes only `schema_version` and the
+content revision; it verifies the old revision first. The installed runtime rejects
+v1 records instead of rewriting them.
 
 ## Execute or import checks
 
@@ -147,13 +159,13 @@ timestamp, source pins and actual output. No test result proves assertion adequa
 
 Without paths, the bounded source inventory is pinned. With paths/globs, only
 that scope is pinned. Dependencies, hidden files and external resources remain
-outside the claim. Imported `archctl.execution.v1` records retain declared origin
+outside the claim. Imported `archctl.execution.v2` records retain declared origin
 and references; importing does not authenticate the producer.
 
 Exit 0 means a successful command with current recorded inputs, 1 a failed command,
 2 unresolved outcome/applicability, and 3 invalid input. Generated records stay in
 `.archctl/executions/`. Source commands and harness import use the schemas under
-`contracts/context/v1/`.
+`contracts/context/v2/`.
 
 ## Optional governed workflow
 

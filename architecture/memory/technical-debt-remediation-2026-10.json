@@ -1,0 +1,60 @@
+{
+  "id": "technical-debt-remediation-2026-10",
+  "statement": "Keep decision lifecycle links, one source exclusion policy, subtractive change exclusions and no acceptance stage without a Change Contract.",
+  "rationale": "The audit reproduced four costly failure modes: bounded ADR retrieval could drop a successor and hid truncation; inventory and evidence pins disagreed about tool and hidden paths; excluded_components was accepted but did not narrow scope; and a no-contract gate reported acceptance passed. The fixes keep lifecycle metadata advisory, make source evidence boundaries explicit, make component exclusions effective, and omit an acceptance claim when no task contract exists. These are contract-preserving corrections, not new approval authority.",
+  "origin": "agent_chosen",
+  "references": [
+    "case:task-case:82028f2d574bb0811fb0c6b5678df583686a2802c0b153899d9b5ea35a059d55",
+    "artifact:.agents/artifacts/technical-debt-audit-2026-10/README.md",
+    "conversation:phase-implement-turn-4"
+  ],
+  "components": [
+    "core",
+    "atlas",
+    "cli"
+  ],
+  "paths": [
+    "src/archctl/core/io.py",
+    "src/archctl/core/context.py",
+    "src/archctl/atlas/context.py",
+    "src/archctl/core/change.py",
+    "src/archctl/atlas/change_scope.py",
+    "src/archctl/cli_gate.py",
+    "tests/test_context.py",
+    "tests/test_core.py",
+    "tests/test_change_contract.py",
+    "tests/test_check_architecture.py"
+  ],
+  "topics": [
+    "technical-debt",
+    "context",
+    "inventory",
+    "change-scope",
+    "gate"
+  ],
+  "assumptions": [
+    "Lifecycle links are retrieval metadata, not approval.",
+    "Hidden, tool and memory paths are outside source evidence.",
+    "excluded_components subtracts before scope checks and must leave a nonempty set.",
+    "No Change Contract means no task acceptance claim."
+  ],
+  "supersedes": [
+    "context-decisions-carry-lifecycle",
+    "one-source-inventory-policy"
+  ],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/atlas/change_scope.py": "d577747a79d87ef7fba34f3271aef8345c2ea0f7aba406faa1d5707b0e7894ce",
+    "src/archctl/atlas/context.py": "6d437bc4051d8c5b2ae132d1186601c7b4fa5f26bda7421740bc7bc7e1141db2",
+    "src/archctl/cli_gate.py": "f8e02b085d7fa35b03a2c086ac826c8631733362ad3380fd24e87dc0065ae574",
+    "src/archctl/core/change.py": "08498b467e8605220858616d11d9b3a40720a9b1635ee8c72cf19d7b42524206",
+    "src/archctl/core/context.py": "e2cf7c5b662c9c4c1591d110a111adc6520a31445541209f1a596d100837cf3d",
+    "src/archctl/core/io.py": "ce1eb1a27ba4f6089ed0500e563924fd691a714891cc78afdbfd154dd1e81c15",
+    "tests/test_change_contract.py": "4795e4d3f6a3e0c08c92e162ac2265e0a7ef74f29a3d13266a430327182b671a",
+    "tests/test_check_architecture.py": "22a0c2e08128ce80b750d52dc943c79b51ff550669214461d9b214dfe923e1c7",
+    "tests/test_context.py": "e5b5c1cd2f620a3811eb923bf1709a2d7643ffdbb3263c3e48220eb2a72057c0",
+    "tests/test_core.py": "7714f6f9f5e9215a7a388da06f977e15cc5879a669beb8fb82ff09b6197b6d82"
+  },
+  "schema_version": "archctl.memory.v2",
+  "revision": "083d6d0f8047d7e33abfbae4038c260e4ab7960873a0a253a53f903c3792bb52"
+}

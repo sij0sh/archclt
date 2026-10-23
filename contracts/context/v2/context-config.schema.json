@@ -1,5 +1,5 @@
 {
-  "$id": "urn:archctl:context:v1:context-config",
+  "$id": "urn:archctl:context:v2:context-config",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -42,7 +42,7 @@
       "type": "array"
     },
     "schema_version": {
-      "const": "archctl.context-config.v1"
+      "const": "archctl.context-config.v2"
     }
   },
   "required": [

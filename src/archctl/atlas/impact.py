@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from archctl.core.enforcement import add_reason, version
+from archctl.core.contracts import version
+from archctl.core.enforcement import add_reason
 from archctl.core.io import digest, relative_path, string
 from archctl.core.models import Observations, Snapshot, owners
 

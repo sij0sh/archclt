@@ -2,8 +2,8 @@
 
 Release source lives at https://github.com/sij0sh/archclt. The Python distribution
 is `archclt`, npm is `@archclt/archctl`, and the entrypoint is `archctl`.
-Versions in `src/archctl/__init__.py` and `package.json` must agree. Contract
-versions are independent: governed v2 and advisory context v1.
+Versions in `src/archctl/__init__.py` and `package.json` must agree. All public
+contracts share one version, currently v2.
 
 ## Validate and build
 
@@ -15,7 +15,9 @@ versions are independent: governed v2 and advisory context v1.
    tests, skips, installed-wheel smoke and artifact hashes under
    `.archctl/validation/`. Native preparation additionally needs a reviewed v2
    exporter selected by `ARCHCTL_RELEASE_EXPORTER`; unavailable checks remain
-   explicitly not executed.
+   explicitly not executed. When both tools are available, run the pinned
+   preparation regression with `ARCHCTL_RELEASE_EXPORTER` and `BRIEFCASE_BIN`
+   before building release artifacts.
 3. Run `python3 scripts/release_artifacts.py`. It builds a wheel and source
    archive, a versioned skill ZIP, an npm tarball and `SHA256SUMS` under `dist/`.
    Inspect package contents. The source archive must be sufficient for contract

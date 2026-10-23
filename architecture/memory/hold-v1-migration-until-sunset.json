@@ -30,6 +30,6 @@
     "src/archctl/core/compiler.py": "6772238de1d05f38070071dadd665c324603755fcec69a1b7d773bfb9c3ccaef",
     "src/archctl/core/migration.py": "e20fb4ddaf07504c5a241b27b3ce71d04b1a8d66e580af6847d4390c362110d7"
   },
-  "schema_version": "archctl.memory.v1",
-  "revision": "023b5735627be03a91843113bcf8f5782df2170cc84db1f9f97f0cc020646483"
+  "schema_version": "archctl.memory.v2",
+  "revision": "8b4bc8b2bcede5865391004a4448edd434661dff50777c23c60c113db62160df"
 }

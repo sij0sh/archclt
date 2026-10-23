@@ -14,7 +14,7 @@ test('bundled wheel tampering is rejected before execution', t => {
   t.after(() => fs.rmSync(directory, {recursive:true, force:true}));
   fs.mkdirSync(path.join(directory, 'npm/runtime'), {recursive:true});
   fs.writeFileSync(path.join(directory, 'npm/runtime/runtime.whl'), 'altered');
-  fs.writeFileSync(path.join(directory, 'npm/runtime/manifest.json'), JSON.stringify({wheel:'runtime.whl', version:'0.3.0', sha256:crypto.createHash('sha256').update('reviewed').digest('hex')}));
+  fs.writeFileSync(path.join(directory, 'npm/runtime/manifest.json'), JSON.stringify({wheel:'runtime.whl', version:'0.4.0', sha256:crypto.createHash('sha256').update('reviewed').digest('hex')}));
   assert.throws(() => runtimeLocation(directory), /checksum mismatch/);
 });
 

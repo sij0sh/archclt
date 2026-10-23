@@ -12,6 +12,7 @@ import unittest
 
 import yaml
 
+from archctl.atlas.context import markdown as context_markdown
 from archctl.core.compiler import compile_model
 from archctl.core.io import InputError, digest, write_json
 from archctl.core.memory import freshness, read_memories, remember
@@ -21,7 +22,7 @@ from tests.fixtures.storefront import initialize
 
 
 def note(ident="batching-lifetime", **extra):
-    return {"schema_version": "archctl.memory.v1", "id": ident,
+    return {"schema_version": "archctl.memory.v2", "id": ident,
         "statement": "API batching assumes a request lifetime",
         "rationale": "Worker concurrency outlives the request; extract pure batching before reuse.",
         "origin": "agent_inferred", "references": ["conversation:task-1/message-2"],
@@ -67,6 +68,52 @@ class ContextWorkflowTests(unittest.TestCase):
         packet = self.cli("context", "Batching lifetime")
         self.assertEqual(packet["decisions"][0]["id"], "ADR-1")
         self.assertIn("request state", packet["decisions"][0]["rationale_excerpt"])
+
+    def test_adr_lifecycle_links_survive_limit_and_markdown(self):
+        folder = self.root / "architecture/decisions"
+        folder.mkdir(parents=True)
+        for number in range(1, 11):
+            ident = f"ADR-{number:02d}"
+            status = "superseded" if number == 1 else "accepted"
+            supersedes = "\nsupersedes: [ADR-01]" if number == 10 else "\nsupersedes: []"
+            (folder / f"{ident}.md").write_text(
+                f"---\nid: {ident}\nstatus: {status}\ntitle: Decision {number}\ncomponents: []{supersedes}\n---\n"
+                "batching decision\n")
+        complete = self.cli("context", "batching", "--limit", "10")
+        by_id = {item["id"]: item for item in complete["decisions"]}
+        self.assertEqual(complete["totals"]["decisions"], 10)
+        self.assertEqual(by_id["ADR-01"]["superseded_by"], ["ADR-10"])
+        self.assertEqual(by_id["ADR-10"]["supersedes"], ["ADR-01"])
+        self.assertIn("Superseded by: ADR-10", context_markdown(complete))
+        limited = self.cli("context", "batching", "--limit", "8")
+        self.assertEqual(limited["totals"]["decisions"], 10)
+        self.assertIn("ADR-10", [item["id"] for item in limited["decisions"]])
+        self.assertNotIn("ADR-01", [item["id"] for item in limited["decisions"]])
+        self.assertTrue(any("returned 8 of 10" in gap["message"] for gap in limited["limitations"]))
+
+    def test_oversized_standalone_adr_is_reported_not_silently_skipped(self):
+        folder = self.root / "architecture/decisions"
+        folder.mkdir(parents=True)
+        (folder / "ADR-BIG.md").write_text("# Batching decision\n\n" + "x" * 65536)
+        packet = self.cli("context", "batching")
+        self.assertTrue(any("exceeds 65536 bytes" in gap["message"] for gap in packet["limitations"]))
+
+    def test_model_dir_moves_governed_adrs_not_advisory_bindings_or_memory(self):
+        model = self.root / "arch"
+        (model / "decisions").mkdir(parents=True)
+        (model / "decisions/ADR-ALT.md").write_text(
+            "---\nid: ADR-ALT\nstatus: accepted\ntitle: Advisory decision\ncomponents: []\nsupersedes: []\n---\n"
+            "Use advisory batching decision.\n")
+        (self.root / "architecture").mkdir()
+        (self.root / "architecture/context.yaml").write_text(yaml.safe_dump({
+            "schema_version": "archctl.context-config.v2",
+            "components": [{"id": "worker-runtime", "paths": ["src/api/**"], "purpose": "Advisory worker"}]}))
+        remember(self.root, note())
+        packet = self.cli("--model-dir", "arch", "context", "advisory batching")
+        self.assertIsNone(packet["source"]["model_revision"])
+        self.assertEqual(packet["decisions"][0]["id"], "ADR-ALT")
+        self.assertIn("worker-runtime", [item["id"] for item in packet["components"]])
+        self.assertIn("batching-lifetime", [item["id"] for item in packet["memories"]])
 
     def test_invalid_default_evidence_is_a_limitation_but_explicit_input_is_an_error(self):
         folder = self.root / ".archctl"
@@ -123,10 +170,24 @@ class ContextWorkflowTests(unittest.TestCase):
         self.assertIn("batching-lifetime", by_id)
         self.assertIn("dispute", by_id)
         self.assertEqual(by_id["batching-lifetime"]["superseded_by"], "extract-batching")
+        self.assertEqual(by_id["batching-lifetime"]["superseded_by_ids"], ["extract-batching"])
         self.assertEqual(len(read_memories(self.root)), 3)
 
+    def test_multiple_memory_successors_are_all_reported(self):
+        remember(self.root, note())
+        remember(self.root, note("successor-a", statement="API batching successor A", paths=[],
+                                 supersedes=["batching-lifetime"]))
+        remember(self.root, note("successor-b", statement="API batching successor B", paths=[],
+                                 supersedes=["batching-lifetime"]))
+        packet = self.cli("context", "API batching")
+        by_id = {item["id"]: item for item in packet["memories"]}
+        self.assertEqual(by_id["batching-lifetime"]["superseded_by_ids"],
+                         ["successor-a", "successor-b"])
+        self.assertEqual(by_id["batching-lifetime"]["superseded_by"], "successor-a")
+        self.assertIn("Superseded by: successor-a, successor-b", context_markdown(packet))
+
     def test_component_alias_preserves_memory_retrieval_after_rename(self):
-        config = {"schema_version": "archctl.context-config.v1", "components": [
+        config = {"schema_version": "archctl.context-config.v2", "components": [
             {"id": "worker-runtime", "aliases": ["legacy-worker"], "paths": ["src/worker/**"]}]}
         (self.root / "architecture").mkdir()
         (self.root / "architecture/context.yaml").write_text(yaml.safe_dump(config))
@@ -148,6 +209,21 @@ class ContextWorkflowTests(unittest.TestCase):
         self.cli("context", "batch", "--out", "src/api/batching.py", expected=3)
         self.cli("context", "batch", "--out", ".archctl/context.json")
         self.cli("context", "batch", "--out", ".archctl/context.json", expected=3)
+
+    def test_legacy_advisory_contracts_are_rejected(self):
+        with self.assertRaisesRegex(InputError, "archctl.memory.v2"):
+            remember(self.root, note(schema_version="archctl.memory.v1"))
+        (self.root / "architecture").mkdir()
+        (self.root / "architecture/context.yaml").write_text(yaml.safe_dump({
+            "schema_version": "archctl.context-config.v1", "components": []}))
+        self.cli("context", "batching", expected=3)
+        (self.root / "architecture/context.yaml").unlink()
+        result = self.cli("verify", "run", "--task", "batching", "--paths", "src/api/batching.py",
+                          "--command", json.dumps([sys.executable, "-c", "pass"]))
+        result.pop("applicability"); result.pop("record_path"); result.pop("revision")
+        result["schema_version"] = "archctl.execution.v1"
+        with self.assertRaisesRegex(InputError, "archctl.execution.v2"):
+            parse_execution(result)
 
     def test_invalid_memory_origin_reference_and_escaping_paths_are_rejected(self):
         for invalid in (note(origin="approved"), note(references=[]), note(paths=["../outside.py"]),
@@ -240,7 +316,7 @@ class ContextWithEvidenceTests(unittest.TestCase):
     def test_advisory_context_config_does_not_enter_governed_model_authority(self):
         baseline = compile_model(self.root)
         path = self.root / "architecture/context.yaml"
-        path.write_text(yaml.safe_dump({"schema_version": "archctl.context-config.v1", "components": [
+        path.write_text(yaml.safe_dump({"schema_version": "archctl.context-config.v2", "components": [
             {"id": "worker", "paths": ["src/worker/**"], "aliases": []}]}))
         self.assertEqual(baseline.revision, compile_model(self.root).revision)
         self.cli("context", "worker", "--paths", "src/worker/jobs.py")

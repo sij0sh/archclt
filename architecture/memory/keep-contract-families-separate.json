@@ -1,0 +1,35 @@
+{
+  "id": "keep-contract-families-separate",
+  "statement": "Keep the governed v2 and advisory context v1 contract families and generators independent.",
+  "rationale": "ADR-005 keeps advisory context outside gate authority. The two schema generators share small JSON-schema helpers by coincidence, not responsibility. Merging them would couple contract versions and let a gate change alter advisory output, or the reverse. contracts/v2 and contracts/context/v1 are separate consumer promises even when their field names look alike.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "architecture/decisions/ADR-005.md",
+    "docs/cli-contracts.md"
+  ],
+  "components": [],
+  "paths": [
+    "scripts/generate_schemas.py",
+    "scripts/generate_context_schemas.py",
+    "contracts/v2/README.md",
+    "contracts/context/v1/README.md"
+  ],
+  "topics": [
+    "simplification",
+    "contracts",
+    "schemas",
+    "adr-005"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "contracts/context/v1/README.md": "6db11d6721279576bc9b781e9ee0e9ebee6ba989dda32a3acf53a7b994f8fa80",
+    "contracts/v2/README.md": "edc00bce08deff6eaf93870a4849469e5ed1003cdc85710343508327130727c5",
+    "scripts/generate_context_schemas.py": "34ab9cbabcaba2e3a4fedf8709241e545ed45c254c8ef5509b3ee8dcc3d7be2c",
+    "scripts/generate_schemas.py": "f7a7c16c6bbf46a50ff4d18cb6385ec0410663b6cf373b96fb58f4865efdc3b4"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "f68c6452ceae253d3cf1269491cc97c6da3f04f4d471d5223fa50f02524d16b5"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "hold-v1-migration-until-sunset",
+  "statement": "Retain v1 authoring migration until an explicit sunset decision.",
+  "rationale": "The v1 authoring format belongs to pre-public prototypes, and 0.2.0 was the first public distribution with v2. But 0.2.0 shipped a one-way migration promise, and the command, docs and tests still define it. Whether any supported input remains is not knowable from this repository. Removing it as cleanup would break a released contract; decide a deprecation and sunset first.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "CHANGELOG.md",
+    "docs/cli-contracts.md",
+    "commit:18b6977285d88a3f40ffb23ab16966e8d93d54b1"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/core/migration.py",
+    "src/archctl/core/compiler.py",
+    "docs/authoring.md"
+  ],
+  "topics": [
+    "simplification",
+    "migration",
+    "v1",
+    "legacy",
+    "sunset"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "docs/authoring.md": "76409a33b0e7caae340a750e23108f7aa11ae59c8df7367b241581f6d03a800c",
+    "src/archctl/core/compiler.py": "6772238de1d05f38070071dadd665c324603755fcec69a1b7d773bfb9c3ccaef",
+    "src/archctl/core/migration.py": "e20fb4ddaf07504c5a241b27b3ce71d04b1a8d66e580af6847d4390c362110d7"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "023b5735627be03a91843113bcf8f5782df2170cc84db1f9f97f0cc020646483"
+}

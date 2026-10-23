@@ -1,0 +1,33 @@
+{
+  "id": "keep-two-authoring-layouts",
+  "statement": "Keep both the single model file and the split-section authoring layouts.",
+  "rationale": "Both layouts compile to the same normalized model and snapshot sources; docs/authoring.md supports both, tests assert model equality, and moving between them is not an authority change. Removing split authoring would break a documented input contract without removing a runtime concept.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "docs/authoring.md",
+    "tests/test_core.py"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/core/compiler.py",
+    "docs/authoring.md",
+    "tests/test_core.py"
+  ],
+  "topics": [
+    "simplification",
+    "authoring",
+    "layouts",
+    "compatibility"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "docs/authoring.md": "76409a33b0e7caae340a750e23108f7aa11ae59c8df7367b241581f6d03a800c",
+    "src/archctl/core/compiler.py": "6772238de1d05f38070071dadd665c324603755fcec69a1b7d773bfb9c3ccaef",
+    "tests/test_core.py": "d1a7384943891694027462d64b4b2c2dd3295c80f4bf052c8bfd20713c0a4aed"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "deb9224e93bf9e0e8c05c67f6212d3b3bad70c1b5bdff9035e9b3f317c3e98dd"
+}

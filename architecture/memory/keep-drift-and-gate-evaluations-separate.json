@@ -1,0 +1,34 @@
+{
+  "id": "keep-drift-and-gate-evaluations-separate",
+  "statement": "Keep reconciliation drift and Guard policy evaluation separate.",
+  "rationale": "Reconciliation reports every observed, missing and violating relationship for review and never blocks by itself. Guard evaluates required policies against a reviewed baseline and owns the blocking verdict; cli_gate composes them and treats only in-scope drift as blocking. Merging would either make advisory drift blocking or hide proven failures behind drift. The shared relationship data does not make the two observable contracts the same.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "architecture/decisions/ADR-002.md",
+    "architecture/decisions/ADR-003.md"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/atlas/reconcile.py",
+    "src/archctl/guard/evaluate.py",
+    "src/archctl/cli_gate.py"
+  ],
+  "topics": [
+    "simplification",
+    "reconciliation",
+    "guard",
+    "gate",
+    "drift"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/atlas/reconcile.py": "ff84d7c9fc14ab7507603a22744e0f6d89b5e4ff83a1424210c163ab5445ab1e",
+    "src/archctl/cli_gate.py": "2b56a6897b4e616586666a086979196ae1558b9560f6a06fd4d311d7f1f50565",
+    "src/archctl/guard/evaluate.py": "3d6faa7e725d838eca032f7e2294ddbbc512584743fbeb71d8fa4a06c5fdc200"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "4fd29c611cb43a6a8c0eb66f6e597e8e84b706dde3d37eab67680b5826d1c4f0"
+}

@@ -1,0 +1,33 @@
+{
+  "id": "keep-guard-observatory-separate",
+  "statement": "Keep Guard and Observatory as separate feature components.",
+  "rationale": "They share only the bounded process executor. Guard evaluates the reviewed policy and authority gate; Observatory runs workflow participants and reports workflow results. Merging them would share failure and ownership across policy approval and workflow execution, contrary to ADR-001, and would let a workflow result imply policy approval. The duplicated report assembly is smaller than the lost boundary.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "architecture/decisions/ADR-001.md",
+    "commit:ba17fd65cf2f5abeccc953c8702ce281384ac217"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/guard/evaluate.py",
+    "src/archctl/observatory/workflows.py",
+    "src/archctl/integrations/process.py"
+  ],
+  "topics": [
+    "simplification",
+    "guard",
+    "observatory",
+    "boundaries"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/guard/evaluate.py": "3d6faa7e725d838eca032f7e2294ddbbc512584743fbeb71d8fa4a06c5fdc200",
+    "src/archctl/integrations/process.py": "c5231f07c9321e6be70ae795d4529e99c917b3b7c5f69ee3fc95590c9b896f5d",
+    "src/archctl/observatory/workflows.py": "9b8e448da11ff8679a99fa907ed2f2e04a09565dbeeee05eee54836b3870fa94"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "e06c252da858bb046d943def5a3a541206bb45d5505f1798803a13691bb41ff6"
+}

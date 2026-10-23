@@ -1,0 +1,33 @@
+{
+  "id": "keep-strict-selective-mode",
+  "statement": "Keep the strict/selective enforcement mode.",
+  "rationale": "The mode changes only the obligation of undeclared observed relationships. Documentation and tests define it, release validation exercises it, and the repository's own model keeps strict. It is a reviewed compatibility option, not dead configuration; removing it would silently make every undeclared observation advisory.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "docs/cli-contracts.md",
+    "tests/test_check_architecture.py"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/core/models.py",
+    "src/archctl/atlas/reconcile.py",
+    "tests/test_check_architecture.py"
+  ],
+  "topics": [
+    "simplification",
+    "enforcement",
+    "selective",
+    "configuration"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/atlas/reconcile.py": "ff84d7c9fc14ab7507603a22744e0f6d89b5e4ff83a1424210c163ab5445ab1e",
+    "src/archctl/core/models.py": "c6b2812061a1703ce059f510901db4a4b35419feaaa0ddab6e11ddb08c91b8b5",
+    "tests/test_check_architecture.py": "4ecac155b792a5c057c519b696e947ad8cdf21048160558c167158200d419d3e"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "c63321952ace84cee2f8818b3ae1af6be1ba092c1eb9504462a32cecb31b49d6"
+}

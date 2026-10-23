@@ -1,0 +1,31 @@
+{
+  "id": "keep-memory-publish-no-clobber",
+  "statement": "Keep memory publication separate from replacing atomic writes.",
+  "rationale": "Memory must publish a complete record without replacing an existing ID, so it uses mkstemp plus os.link and fails on a concurrent writer. io.write_text deliberately replaces a generated artifact with os.replace. Sharing one helper would either allow memory overwrite or make ordinary generated outputs fail when a file already exists; the failure modes are different.",
+  "origin": "agent_inferred",
+  "references": [
+    ".agents/artifacts/simplification-audit-2026-10-23.md",
+    "src/archctl/core/memory.py",
+    "src/archctl/core/io.py"
+  ],
+  "components": [],
+  "paths": [
+    "src/archctl/core/memory.py",
+    "src/archctl/core/io.py"
+  ],
+  "topics": [
+    "simplification",
+    "memory",
+    "atomic-write",
+    "immutability"
+  ],
+  "assumptions": [],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/core/io.py": "e0588df720150615b019321d156b4c36ab11aee60a506ec14c5beec1af96cdb9",
+    "src/archctl/core/memory.py": "ab5982df7685ade395dc05fc5ec24fe724c2b3453f1d4e5ebc0c832e300c26f3"
+  },
+  "schema_version": "archctl.memory.v1",
+  "revision": "bcca3dc3925328788e4bff533750f7cc04b606c479e71602f8a10678921c55e9"
+}

@@ -6,10 +6,10 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
-import yaml
 
+from archctl.core.compiler import parse_decision
 from archctl.core.io import (InputError, contained, digest, load_document, obj,
-                             relative_path, stable_id, string, strings, UniqueLoader)
+                             relative_path, stable_id, string, strings)
 from archctl.core.models import Snapshot, owners
 
 SKIP = {".git", ".archctl", ".briefcase", "__pycache__", ".venv", "venv", "node_modules",
@@ -111,17 +111,10 @@ def decision_notes(root: Path, directory: str) -> list[dict]:
         if path.stat().st_size > 65536:
             continue
         text = path.read_text(encoding="utf-8")
-        parts = re.split(r"^---\s*$", text, maxsplit=2, flags=re.MULTILINE)
-        front = {}
-        body = text
-        if len(parts) == 3 and not parts[0].strip():
-            try:
-                front = yaml.load(parts[1], Loader=UniqueLoader)
-                if not isinstance(front, dict):
-                    front = {}
-                body = parts[2].strip()
-            except (yaml.YAMLError, InputError):
-                front = {}
+        try:
+            front, body = parse_decision(text, rel)
+        except InputError:
+            front, body = {}, text
         components = front.get("components", [])
         if not isinstance(components, list) or any(not isinstance(c, str) for c in components):
             components = []

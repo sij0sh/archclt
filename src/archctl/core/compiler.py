@@ -268,20 +268,30 @@ def compile_model(root: Path, model_dir: str = "architecture") -> Snapshot:
         rel = path.relative_to(root).as_posix()
         path = contained(root, rel)
         try:
-            text = path.read_text(encoding="utf-8")
-            parts = re.split(r"^---\s*$", text, maxsplit=2, flags=re.MULTILINE)
-            if len(parts) != 3 or parts[0].strip():
-                raise InputError(f"ADR requires YAML front matter: {rel}")
-            front = yaml.load(parts[1], Loader=UniqueLoader)
-            obj(front, rel, {"id", "title", "status", "components", "supersedes"},
-                {"id", "title", "status", "components"})
-            data["decisions"].append({**front, "path": rel, "body": parts[2].strip()})
-            sources[rel] = file_digest(path)
-        except (OSError, UnicodeError, yaml.YAMLError, RecursionError) as exc:
+            front, body = parse_decision(path.read_text(encoding="utf-8"), rel)
+        except (OSError, UnicodeError) as exc:
             raise InputError(f"Invalid ADR {rel}: {exc}") from exc
+        obj(front, rel, {"id", "title", "status", "components", "supersedes"},
+            {"id", "title", "status", "components"})
+        data["decisions"].append({**front, "path": rel, "body": body})
+        sources[rel] = file_digest(path)
     model = parse_model(data)
     content = {"model": model.to_dict(), "sources": dict(sorted(sources.items()))}
     return Snapshot(digest(content), model, tuple(sorted(sources.items())))
+
+
+def parse_decision(text: str, label: str) -> tuple[dict, str]:
+    """Read one ADR's front matter and body; the caller decides whether malformed text is fatal."""
+    parts = re.split(r"^---\s*$", text, maxsplit=2, flags=re.MULTILINE)
+    if len(parts) != 3 or parts[0].strip():
+        raise InputError(f"ADR requires YAML front matter: {label}")
+    try:
+        front = yaml.load(parts[1], Loader=UniqueLoader)
+    except (yaml.YAMLError, RecursionError) as exc:
+        raise InputError(f"Invalid ADR {label}: {exc}") from exc
+    if not isinstance(front, dict):
+        raise InputError(f"ADR front matter must be a mapping: {label}")
+    return front, parts[2].strip()
 
 
 def read_snapshot(path: Path) -> Snapshot:

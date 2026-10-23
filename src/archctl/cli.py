@@ -16,10 +16,9 @@ from archctl.atlas.impact import build_impact
 from archctl.atlas.reconcile import reconcile
 from archctl.atlas.report import markdown
 from archctl.core.enforcement import version
-from archctl.core.migration import migrate_document
-from archctl.core.io import write_text, load_document
 from archctl.core.compiler import compile_model, has_authoring_model, read_snapshot
-from archctl.core.io import InputError, contained, matches, write_json, write_text
+from archctl.core.io import InputError, contained, load_document, matches, write_json, write_text
+from archctl.core.migration import migrate_document
 from archctl.core.models import ACTIVE_DECISIONS, Snapshot
 from archctl.core.change import read_change
 from archctl.cli_gate import EXIT, changed_paths, run_gate

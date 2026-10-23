@@ -6,7 +6,6 @@ not protection from an agent with the operator's credentials and permissions.
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 import re

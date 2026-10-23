@@ -8,12 +8,10 @@ from pathlib import Path
 import re
 
 from archctl.core.compiler import parse_decision
-from archctl.core.io import (InputError, contained, digest, load_document, obj,
+from archctl.core.io import (InputError, SKIP, contained, digest, load_document, obj,
                              relative_path, stable_id, string, strings)
 from archctl.core.models import Snapshot, owners
 
-SKIP = {".git", ".archctl", ".briefcase", "__pycache__", ".venv", "venv", "node_modules",
-        "target", "dist", "build", ".pytest_cache"}
 CODE = {".py", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt", ".c", ".h",
         ".cpp", ".cs", ".rb", ".sql", ".swift", ".scala"}
 

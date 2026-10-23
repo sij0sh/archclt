@@ -19,6 +19,11 @@ class InputError(ValueError):
     """An authoring or exchange contract is invalid."""
 
 
+# One exclusion policy for repository source inventory and evidence pins.
+SKIP = {".git", ".archctl", ".briefcase", "__pycache__", ".venv", "venv", "node_modules",
+        "target", "dist", "build", ".pytest_cache"}
+
+
 class UniqueLoader(yaml.SafeLoader):
     pass
 
@@ -129,7 +134,7 @@ def source_files(root: Path, patterns: tuple[str, ...]) -> dict[str, str]:
         expanded = pattern + "/*" if pattern.endswith("/**") else pattern
         for path in root.glob(expanded):
             rel = path.relative_to(root).as_posix()
-            if any(p in {".git", ".archctl", "__pycache__", ".venv", "node_modules", "target"} for p in PurePosixPath(rel).parts):
+            if any(part in SKIP for part in PurePosixPath(rel).parts):
                 continue
             target = contained(root, rel)
             if target.is_file():

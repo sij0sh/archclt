@@ -30,7 +30,7 @@ Status: passed with one optional integration skip. Date: October 23, 2026.
 | `archctl model validate` | passed at revision `7def7263de5a8258ef546830f227732a60fde0cdcad070fee7e3d03f60faab5b`, 9 components |
 | `archctl status` | `needs_attention` only because `.archctl/evidence.json` is absent; model valid; gate `not_executed`; approval `not_assessed` |
 | `archctl memory list` | 16 records, all `archctl.memory.v2` |
-| `archctl verify run` | full regression passed with current scoped inputs; `archctl.execution.v2`; record `.archctl/executions/8aac09437e694b378d82afcb1acc56f1.json` |
+| `archctl verify run` | full regression passed with current scoped inputs; `archctl.execution.v2`; record `.archctl/executions/7d7cb06f47e74a1e85a059fd07d988e3.json` |
 
 The wheel recorded by `scripts/validate.py` was
 `archclt-0.4.0-py3-none-any.whl`, 72,629 bytes, SHA-256
@@ -54,6 +54,9 @@ The wheel recorded by `scripts/validate.py` was
   `BRIEFCASE_BIN=/home/joshsimon/.local/opt/briefcase/adf8ff83d647825f3b3869b91b91ff1707b3fa1e/briefcase`
   (Briefcase 0.1.0) passed all 187 tests, executed pinned preparation and
   reported 6 prepared pins.
-- The standalone Pi `arch_context` adapter still rejects the current CLI:
-  `archctl status returned archctl.status.v2; expected archctl.status.v1`. Use
-  the `archctl` CLI directly until that adapter is updated.
+- The `pi-archctl` 0.3.0 repository adapter accepts only v2 and passed its unit,
+  integration and release checks. The adapter already loaded by a running Pi
+  session may still be the previous 0.2.0 code; restart Pi to load 0.3.0.
+- An out-of-session adapter smoke against this repository returned
+  `archctl.status.v2`, `needs_attention`, gate `not_executed`, approval
+  `not_assessed` and exit 2.

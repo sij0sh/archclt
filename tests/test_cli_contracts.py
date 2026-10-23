@@ -9,9 +9,12 @@ from unittest.mock import patch
 import subprocess
 import sys
 
+import yaml
+
 from archctl.cli import main
 from archctl.core.io import write_json
 from tests.support import ProjectTest, build
+from tests.test_check_architecture import contract
 
 
 class CliContractTests(ProjectTest):
@@ -96,6 +99,43 @@ class CliContractTests(ProjectTest):
         missing = self.cli("impact", "Missing evidence", "--evidence", "missing.json",
                            "--paths", "app/orders/api.py", expected=3)
         self.assertEqual(json.loads(missing.stderr)["schema_version"], "archctl.error.v2")
+
+    def test_change_validate_reports_passed_and_unknown(self):
+        path = self.root / ".archctl/change.yaml"
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(yaml.safe_dump(contract()))
+        result = self.cli("change", "validate", "--input", ".archctl/change.yaml")
+        report = json.loads(result.stdout)
+        self.assertEqual(report["schema_version"], "archctl.change-validation.v2")
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["unknowns"], [])
+        self.assertTrue(report["change_revision"])
+
+        value = contract()
+        value["acceptance"][0]["checks"] = []
+        value["open_questions"] = ["Confirm the rollout owner"]
+        path.write_text(yaml.safe_dump(value))
+        result = self.cli("change", "validate", "--input", ".archctl/change.yaml", expected=2)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["status"], "unknown")
+        self.assertIn("Acceptance criterion has no verification: AC-01", report["unknowns"])
+        self.assertIn("Open question: Confirm the rollout owner", report["unknowns"])
+
+    def test_observe_import_normalizes_runtime_evidence(self):
+        bundle = build(self.root)
+        bundle["coverage"].update(analysis="runtime", status="partial", gaps=["Sampled at runtime"])
+        for item in bundle["evidence"]:
+            item["kind"] = "runtime"
+        for edge in bundle["edges"]:
+            edge["origin"] = "runtime"
+        write_json(self.root / "runtime.json", bundle)
+        result = self.cli("observe", "import", "--input", "runtime.json", "--out", "normalized.json")
+        written = json.loads(result.stdout)
+        self.assertEqual(written["schema_version"], "archctl.output.v2")
+        imported = json.loads((self.root / "normalized.json").read_text())
+        self.assertEqual(imported["schema_version"], "archctl.evidence.v2")
+        self.assertEqual(imported["coverage"]["analysis"], "runtime")
+        self.assertTrue(imported["edges"])
 
     def test_guard_unknown_and_passed_contracts(self):
         unknown = self.cli("guard", "check", "--baseline", "baseline.json", "--evidence", "evidence.json",

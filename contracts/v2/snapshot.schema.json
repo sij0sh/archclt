@@ -1,0 +1,912 @@
+{
+  "$defs": {
+    "component": {
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "service",
+            "library",
+            "database",
+            "queue",
+            "external",
+            "ui"
+          ]
+        },
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "paths": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "domain",
+        "id",
+        "kind",
+        "name",
+        "paths"
+      ],
+      "type": "object"
+    },
+    "decision": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "components": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "accepted",
+            "deprecated",
+            "superseded",
+            "rejected"
+          ]
+        },
+        "supersedes": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "title": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "body",
+        "components",
+        "id",
+        "path",
+        "status",
+        "supersedes",
+        "title"
+      ],
+      "type": "object"
+    },
+    "domain": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "owners": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "owners"
+      ],
+      "type": "object"
+    },
+    "finding": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "obligation": {
+          "enum": [
+            "required",
+            "advisory"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unknown",
+            "not_executed"
+          ]
+        }
+      },
+      "required": [
+        "decision",
+        "evidence_refs",
+        "id",
+        "message",
+        "severity",
+        "status",
+        "obligation"
+      ],
+      "type": "object"
+    },
+    "impact": {
+      "additionalProperties": false,
+      "properties": {
+        "affected_components": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "basis": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "evidence_refs": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              },
+              "id": {
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "basis",
+              "evidence_refs",
+              "id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "assessment": {
+          "enum": [
+            "partial",
+            "complete"
+          ]
+        },
+        "changed_paths": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "governing_decisions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+                "type": "string"
+              },
+              "path": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "accepted",
+                  "deprecated"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "status"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "model_revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "archctl.impact.v2"
+        },
+        "scope": {
+          "enum": [
+            "all",
+            "changed"
+          ]
+        },
+        "source": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "revision": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "digest",
+            "revision"
+          ],
+          "type": "object"
+        },
+        "task": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "unknown_details": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "category": {
+                "enum": [
+                  "freshness",
+                  "coverage",
+                  "scope",
+                  "drift"
+                ]
+              },
+              "message": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "obligation": {
+                "enum": [
+                  "required",
+                  "advisory"
+                ]
+              }
+            },
+            "required": [
+              "category",
+              "message",
+              "obligation"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "verification": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "basis": {
+                "const": "declared_requirement"
+              },
+              "id": {
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+                "type": "string"
+              },
+              "obligation": {
+                "enum": [
+                  "required",
+                  "advisory"
+                ]
+              },
+              "required_by": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "decision": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "id": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "obligation": {
+                      "enum": [
+                        "required",
+                        "advisory"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision",
+                    "id",
+                    "obligation"
+                  ],
+                  "type": "object"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "status": {
+                "const": "not_executed"
+              }
+            },
+            "required": [
+              "basis",
+              "id",
+              "required_by",
+              "status",
+              "obligation"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "affected_components",
+        "assessment",
+        "changed_paths",
+        "governing_decisions",
+        "model_revision",
+        "revision",
+        "schema_version",
+        "scope",
+        "source",
+        "task",
+        "unknowns",
+        "verification",
+        "unknown_details"
+      ],
+      "type": "object"
+    },
+    "interface": {
+      "additionalProperties": false,
+      "properties": {
+        "consumers": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "decision": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "provider": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "verification": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "consumers",
+        "decision",
+        "id",
+        "provider",
+        "verification"
+      ],
+      "type": "object"
+    },
+    "model": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "items": {
+            "$ref": "#/$defs/component"
+          },
+          "type": "array"
+        },
+        "decisions": {
+          "items": {
+            "$ref": "#/$defs/decision"
+          },
+          "type": "array"
+        },
+        "domains": {
+          "items": {
+            "$ref": "#/$defs/domain"
+          },
+          "type": "array"
+        },
+        "enforcement": {
+          "enum": [
+            "strict",
+            "selective"
+          ]
+        },
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/interface"
+          },
+          "type": "array"
+        },
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "policies": {
+          "items": {
+            "$ref": "#/$defs/policy"
+          },
+          "type": "array"
+        },
+        "relationships": {
+          "items": {
+            "$ref": "#/$defs/relationship"
+          },
+          "type": "array"
+        },
+        "system_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "verification": {
+          "items": {
+            "$ref": "#/$defs/verification-target"
+          },
+          "type": "array"
+        },
+        "workflows": {
+          "items": {
+            "$ref": "#/$defs/workflow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "components",
+        "decisions",
+        "domains",
+        "interfaces",
+        "name",
+        "policies",
+        "relationships",
+        "system_id",
+        "verification",
+        "workflows",
+        "enforcement"
+      ],
+      "type": "object"
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "components": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "decision": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "forbidden_dependency",
+            "required_verification"
+          ]
+        },
+        "kinds": {
+          "items": {
+            "enum": [
+              "imports",
+              "calls",
+              "reads",
+              "writes",
+              "publishes",
+              "consumes"
+            ]
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "obligation": {
+          "enum": [
+            "required",
+            "advisory"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "checks",
+        "components",
+        "decision",
+        "id",
+        "kind",
+        "kinds",
+        "severity",
+        "source",
+        "target",
+        "obligation"
+      ],
+      "type": "object"
+    },
+    "relationship": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "imports",
+            "calls",
+            "reads",
+            "writes",
+            "publishes",
+            "consumes"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "source": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "id",
+        "kind",
+        "required",
+        "source",
+        "target"
+      ],
+      "type": "object"
+    },
+    "verification-result": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "command_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "cwd": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "duration_seconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "environment": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "model_revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "obligation": {
+          "enum": [
+            "required",
+            "advisory"
+          ]
+        },
+        "output_truncated": {
+          "type": "boolean"
+        },
+        "required_by": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "decision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "obligation": {
+                "enum": [
+                  "required",
+                  "advisory"
+                ]
+              }
+            },
+            "required": [
+              "decision",
+              "id",
+              "obligation"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "returncode": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "source_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unknown",
+            "not_executed"
+          ]
+        },
+        "stderr": {
+          "type": "string"
+        },
+        "stdout": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "command_digest",
+        "cwd",
+        "duration_seconds",
+        "environment",
+        "id",
+        "message",
+        "model_revision",
+        "output_truncated",
+        "returncode",
+        "source_digest",
+        "status",
+        "stderr",
+        "stdout",
+        "obligation",
+        "required_by"
+      ],
+      "type": "object"
+    },
+    "verification-target": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "components": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "cwd": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "contract",
+            "integration",
+            "workflow",
+            "architecture"
+          ]
+        },
+        "timeout_seconds": {
+          "maximum": 300,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "command",
+        "components",
+        "cwd",
+        "id",
+        "kind",
+        "timeout_seconds"
+      ],
+      "type": "object"
+    },
+    "workflow": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+          "type": "string"
+        },
+        "participants": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "verification": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "decision",
+        "id",
+        "participants",
+        "verification"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:archctl:v2:snapshot",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "$ref": "#/$defs/model"
+    },
+    "revision": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "archctl.snapshot.v2"
+    },
+    "sources": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "model",
+    "revision",
+    "schema_version",
+    "sources"
+  ],
+  "type": "object"
+}

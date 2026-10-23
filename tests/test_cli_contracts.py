@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+from contextlib import redirect_stdout
+import io
+import json
+import os
+from pathlib import Path
+from unittest.mock import patch
+import subprocess
+import sys
+
+from archctl.cli import main
+from archctl.core.io import write_json
+from tests.support import ProjectTest, build
+
+
+class CliContractTests(ProjectTest):
+    def setUp(self):
+        super().setUp()
+        write_json(self.root / "baseline.json", self.baseline.to_dict())
+        write_json(self.root / "evidence.json", build(self.root))
+
+    def cli(self, *args, expected=0):
+        result = subprocess.run([sys.executable, "-m", "archctl", "--root", str(self.root), *args],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+        return result
+
+    def test_model_migration_preserves_original_and_rejects_overwrite(self):
+        import yaml
+        source = self.root / "architecture/model.yaml"
+        document = yaml.safe_load(source.read_text())
+        document.update(schema_version="archctl.authoring.v1")
+        document.pop("enforcement")
+        for policy in document["policies"]:
+            policy.pop("obligation")
+        source.write_text(yaml.safe_dump(document))
+        original = source.read_bytes()
+        result = self.cli("model", "migrate", "--input", "architecture/model.yaml", "--out", "migrated.yaml")
+        self.assertEqual(json.loads(result.stdout)["schema_version"], "archctl.output.v2")
+        self.assertEqual(source.read_bytes(), original)
+        migrated = yaml.safe_load((self.root / "migrated.yaml").read_text())
+        self.assertEqual(migrated["enforcement"], "strict")
+        self.assertTrue(all(p["obligation"] == "required" for p in migrated["policies"]))
+        self.cli("model", "migrate", "--input", "architecture/model.yaml", "--out", "migrated.yaml", expected=3)
+        self.assertEqual(source.read_bytes(), original)
+
+    def test_model_validate_json_and_error_contracts(self):
+        result = self.cli("model", "validate")
+        report = json.loads(result.stdout)
+        self.assertEqual(report["schema_version"], "archctl.model-validation.v2")
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["revision"], self.baseline.revision)
+        self.assertIsInstance(report["components"], int)
+        self.assertEqual(result.stderr, "")
+
+        (self.root / "architecture/model.yaml").write_text("schema_version: [\n")
+        result = self.cli("model", "validate", expected=3)
+        self.assertEqual(result.stdout, "")
+        error = json.loads(result.stderr)
+        self.assertEqual(error["schema_version"], "archctl.error.v2")
+        self.assertEqual(error["status"], "error")
+        self.assertTrue(error["message"])
+
+    def test_invalid_invocations_use_the_json_input_error_contract(self):
+        for arguments in ((), ("unknown-command",), ("gate", "--baseline-file", "snapshot.json")):
+            result = self.cli(*arguments, expected=3)
+            self.assertEqual(result.stdout, "")
+            self.assertEqual(json.loads(result.stderr)["schema_version"], "archctl.error.v2")
+
+    def test_decisions_list_and_show_contracts(self):
+        listed = json.loads(self.cli("decisions", "list", "--components", "orders").stdout)
+        self.assertEqual(listed["schema_version"], "archctl.decisions.v2")
+        self.assertEqual(listed["model_revision"], self.baseline.revision)
+        self.assertEqual([decision["id"] for decision in listed["decisions"]], ["ADR-001"])
+
+        shown = json.loads(self.cli("decisions", "show", "ADR-001").stdout)
+        self.assertEqual(shown["schema_version"], "archctl.decision.v2")
+        self.assertEqual(shown["id"], "ADR-001")
+        self.assertTrue(shown["body"])
+
+        error = json.loads(self.cli("decisions", "show", "ADR-MISSING", expected=3).stderr)
+        self.assertEqual(error["schema_version"], "archctl.error.v2")
+        self.assertIn("Unknown decision", error["message"])
+
+    def test_impact_contract_and_exit_codes(self):
+        result = self.cli("impact", "Change checkout", "--evidence", "evidence.json",
+                          "--paths", "app/orders/api.py")
+        impact = json.loads(result.stdout)
+        self.assertEqual(impact["schema_version"], "archctl.impact.v2")
+        self.assertEqual(impact["assessment"], "complete")
+        self.assertEqual(result.stderr, "")
+
+        partial = self.cli("impact", "No concrete scope", "--evidence", "evidence.json", expected=2)
+        self.assertEqual(json.loads(partial.stdout)["assessment"], "partial")
+        missing = self.cli("impact", "Missing evidence", "--evidence", "missing.json",
+                           "--paths", "app/orders/api.py", expected=3)
+        self.assertEqual(json.loads(missing.stderr)["schema_version"], "archctl.error.v2")
+
+    def test_guard_unknown_and_passed_contracts(self):
+        unknown = self.cli("guard", "check", "--baseline", "baseline.json", "--evidence", "evidence.json",
+                           "--paths", "app/orders/api.py", expected=2)
+        report = json.loads(unknown.stdout)
+        self.assertEqual(report["schema_version"], "archctl.guard.v2")
+        self.assertEqual(report["status"], "unknown")
+        self.assertFalse(report["authority_changed"])
+        self.assertTrue(all(check["status"] == "not_executed" for check in report["verification"]))
+
+        passed = self.cli("guard", "check", "--baseline", "baseline.json", "--evidence", "evidence.json",
+                          "--paths", "app/orders/api.py", "--run")
+        report = json.loads(passed.stdout)
+        self.assertEqual(report["status"], "passed")
+        self.assertTrue(all(check["status"] == "passed" for check in report["verification"]))
+
+    def test_guard_failed_and_input_error_contracts(self):
+        path = self.root / "app/orders/api.py"
+        path.write_text("from app.ledger import store\n" + path.read_text())
+        write_json(self.root / "evidence.json", build(self.root))
+        result = self.cli("guard", "check", "--baseline", "baseline.json", "--evidence", "evidence.json",
+                          "--paths", "app/orders/api.py", "--run", expected=1)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["status"], "failed")
+        violation = next(finding for finding in report["findings"] if finding["id"] == "payment-isolation")
+        self.assertEqual(violation["status"], "failed")
+        self.assertTrue(all(check["status"] == "not_executed" for check in report["verification"]))
+
+        error = self.cli("guard", "check", "--baseline", "missing.json", "--evidence", "evidence.json",
+                         "--paths", "app/orders/api.py", expected=3)
+        self.assertEqual(json.loads(error.stderr)["schema_version"], "archctl.error.v2")
+
+    def test_output_acknowledgement_contract(self):
+        result = self.cli("impact", "Change checkout", "--evidence", "evidence.json",
+                          "--paths", "app/orders/api.py", "--out", ".archctl/impact.json")
+        acknowledgement = json.loads(result.stdout)
+        self.assertEqual(acknowledgement["schema_version"], "archctl.output.v2")
+        self.assertEqual(acknowledgement["status"], "written")
+        written = json.loads((self.root / ".archctl/impact.json").read_text())
+        self.assertEqual(written["schema_version"], "archctl.impact.v2")
+
+    def test_preparation_cli_routes_explicit_tools_and_returns_output_acknowledgement(self):
+        output = self.root / ".archctl/prepared/new"
+        acknowledgement = {"schema_version": "archctl.output.v2", "status": "written",
+                           "output": str(output / "evidence.json"), "manifest": str(output / "manifest.json")}
+        with patch("archctl.cli.prepare_evidence", return_value=acknowledgement) as prepare:
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = main(["--root", str(self.root), "briefcase", "prepare-evidence",
+                             "--archctl", "/external/archctl", "--briefcase", "/external/briefcase",
+                             "--source-root", "app", "--out-dir", ".archctl/prepared/new"])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(stdout.getvalue()), acknowledgement)
+        self.assertEqual(prepare.call_args.kwargs["archctl"], Path("/external/archctl"))
+        self.assertEqual(prepare.call_args.kwargs["source_roots"], ("app",))
+        self.assertEqual(prepare.call_args.kwargs["destination"], output)
+
+    def test_preparation_requires_explicit_tools_and_source_roots(self):
+        result = self.cli("briefcase", "prepare-evidence", expected=3)
+        self.assertEqual(json.loads(result.stderr)["schema_version"], "archctl.error.v2")
+        result = self.cli("briefcase", "prepare-evidence", "--archctl", "/missing/archctl",
+                          "--briefcase", "/missing/briefcase", "--source-root", "app",
+                          "--out-dir", "app/orders/generated", expected=3)
+        self.assertFalse((self.root / "app/orders/generated").exists())
+        self.assertIn(".archctl/", json.loads(result.stderr)["message"])
+
+    def test_configured_tools_work_without_path_and_flags_override_them(self):
+        environment = {"ARCHCTL_BIN": "/configured/archctl", "BRIEFCASE_BIN": "/configured/briefcase", "PATH": "/no-tools"}
+        base = ["--root", str(self.root)]
+        with patch.dict(os.environ, environment), redirect_stdout(io.StringIO()):
+            with patch("archctl.cli.prepare_evidence", return_value={}) as prepare:
+                args = [*base, "briefcase", "prepare-evidence", "--source-root", ".", "--out-dir", ".archctl/new"]
+                self.assertEqual(main(args), 0)
+                self.assertEqual(prepare.call_args.kwargs["archctl"], Path("/configured/archctl"))
+                self.assertEqual(prepare.call_args.kwargs["briefcase"], Path("/configured/briefcase"))
+                self.assertEqual(main([*args, "--archctl", "/flag/archctl", "--briefcase", "/flag/briefcase"]), 0)
+                self.assertEqual(prepare.call_args.kwargs["archctl"], Path("/flag/archctl"))
+                self.assertEqual(prepare.call_args.kwargs["briefcase"], Path("/flag/briefcase"))
+            with patch("archctl.cli.export_evidence", return_value=build(self.root)) as export:
+                args = [*base, "briefcase", "export-evidence"]
+                self.assertEqual(main(args), 0)
+                self.assertEqual(export.call_args.kwargs["binary"], "/configured/briefcase")
+                self.assertEqual(main([*args, "--briefcase", "/flag/briefcase"]), 0)
+                self.assertEqual(export.call_args.kwargs["binary"], "/flag/briefcase")
+            with patch("archctl.cli.run_gate", return_value=(0, {})) as gate:
+                args = [*base, "gate", "--baseline-ref", "a" * 40]
+                self.assertEqual(main(args), 0)
+                self.assertEqual(gate.call_args.args[1].briefcase, "/configured/briefcase")
+                self.assertEqual(main([*args, "--briefcase", "/flag/briefcase"]), 0)
+                self.assertEqual(gate.call_args.args[1].briefcase, "/flag/briefcase")

@@ -1,0 +1,408 @@
+schema_version: archctl.authoring.v2
+system_id: archctl
+name: Architecture Control Plane
+domains:
+- id: architecture
+  name: Architecture tooling
+  owners:
+  - maintainers
+components:
+- id: core
+  name: Core
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/core/**
+- id: package
+  name: Package root
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/__init__.py
+- id: entrypoint
+  name: Entrypoint
+  domain: architecture
+  kind: service
+  paths:
+  - src/archctl/__main__.py
+- id: atlas
+  name: Atlas
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/atlas/**
+- id: guard
+  name: Guard
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/guard/**
+- id: observatory
+  name: Observatory
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/observatory/**
+- id: integrations
+  name: Integrations
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/integrations/**
+- id: templates
+  name: Templates
+  domain: architecture
+  kind: library
+  paths:
+  - src/archctl/templates.py
+- id: cli
+  name: Cli
+  domain: architecture
+  kind: service
+  paths:
+  - src/archctl/cli.py
+  - src/archctl/cli_gate.py
+  - src/archctl/cli_report.py
+relationships:
+- id: atlas-core
+  source: atlas
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: guard-core
+  source: guard
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: guard-integrations
+  source: guard
+  target: integrations
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: observatory-core
+  source: observatory
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: observatory-integrations
+  source: observatory
+  target: integrations
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: integrations-core
+  source: integrations
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: templates-core
+  source: templates
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: entrypoint-cli
+  source: entrypoint
+  target: cli
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-core
+  source: cli
+  target: core
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-atlas
+  source: cli
+  target: atlas
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-guard
+  source: cli
+  target: guard
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-observatory
+  source: cli
+  target: observatory
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-integrations
+  source: cli
+  target: integrations
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: cli-templates
+  source: cli
+  target: templates
+  kind: imports
+  decision: ADR-001
+  required: true
+- id: atlas-package
+  source: atlas
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: cli-package
+  source: cli
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: core-package
+  source: core
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: entrypoint-package
+  source: entrypoint
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: guard-package
+  source: guard
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: integrations-package
+  source: integrations
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: observatory-package
+  source: observatory
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+- id: templates-package
+  source: templates
+  target: package
+  kind: imports
+  decision: ADR-004
+  required: true
+policies:
+- id: core-independent
+  kind: forbidden_dependency
+  source: core
+  targets:
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: package-independent
+  kind: forbidden_dependency
+  source: package
+  targets:
+  - core
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: entrypoint-independent
+  kind: forbidden_dependency
+  source: entrypoint
+  targets:
+  - core
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: atlas-independent
+  kind: forbidden_dependency
+  source: atlas
+  targets:
+  - entrypoint
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: guard-independent
+  kind: forbidden_dependency
+  source: guard
+  targets:
+  - entrypoint
+  - atlas
+  - observatory
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: observatory-independent
+  kind: forbidden_dependency
+  source: observatory
+  targets:
+  - entrypoint
+  - atlas
+  - guard
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: integrations-independent
+  kind: forbidden_dependency
+  source: integrations
+  targets:
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - templates
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: templates-independent
+  kind: forbidden_dependency
+  source: templates
+  targets:
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - cli
+  kinds:
+  - imports
+  severity: error
+  decision: ADR-001
+  obligation: required
+- id: architecture-regressions
+  kind: required_verification
+  components:
+  - core
+  - package
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+  checks:
+  - module-boundaries
+  - regression-suite
+  - workflow-demo
+  severity: error
+  decision: ADR-002
+  obligation: required
+verification:
+- id: module-boundaries
+  kind: architecture
+  command:
+  - python3
+  - -m
+  - unittest
+  - tests.test_architecture
+  - -v
+  cwd: .
+  timeout_seconds: 30
+  components:
+  - core
+  - package
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+- id: regression-suite
+  kind: integration
+  command:
+  - python3
+  - -m
+  - unittest
+  - discover
+  - -s
+  - tests
+  - -v
+  cwd: .
+  timeout_seconds: 90
+  components:
+  - core
+  - package
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+- id: workflow-demo
+  kind: workflow
+  command:
+  - python3
+  - scripts/demo.py
+  cwd: .
+  timeout_seconds: 30
+  components:
+  - core
+  - package
+  - entrypoint
+  - atlas
+  - guard
+  - observatory
+  - integrations
+  - templates
+  - cli
+workflows:
+- id: cli-release
+  participants:
+  - entrypoint
+  - cli
+  verification:
+  - workflow-demo
+  decision: ADR-001
+enforcement: strict

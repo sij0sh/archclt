@@ -25,7 +25,7 @@ class PreparationFixture(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.directory = Path(self.temp.name)
+        self.directory = Path(self.temp.name).resolve()
         self.root = self.directory / "application"
         initialize(self.root, demo=True)
         (self.root / ".gitignore").write_text(".archctl/\n.briefcase/\n__pycache__/\n")

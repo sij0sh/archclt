@@ -5,8 +5,15 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from archctl.core.io import matches
+
 KINDS = {"imports", "calls", "reads", "writes", "publishes", "consumes"}
 ACTIVE_DECISIONS = {"accepted", "deprecated"}
+
+
+def owners(path: str, scopes) -> list[str]:
+    """Declared component or binding IDs whose paths contain this path."""
+    return [scope.id for scope in scopes if any(matches(path, pattern) for pattern in scope.paths)]
 
 
 @dataclass(frozen=True)

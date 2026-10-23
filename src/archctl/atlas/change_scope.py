@@ -5,7 +5,7 @@ from __future__ import annotations
 from archctl.core.enforcement import add_reason, policy_obligation
 from archctl.core.change import Change
 from archctl.core.io import digest, matches
-from archctl.core.models import Snapshot
+from archctl.core.models import Snapshot, owners
 
 
 def apply_change(change: Change, snapshot: Snapshot, baseline: Snapshot, impact: dict) -> dict:
@@ -16,16 +16,15 @@ def apply_change(change: Change, snapshot: Snapshot, baseline: Snapshot, impact:
     for component in sorted(affected - allowed):
         gaps.append(f"Affected component is outside reviewed change scope: {component}")
     for path in impact["changed_paths"]:
-        owners = {c.id for model in (snapshot.model, baseline.model) for c in model.components
-                  if any(matches(path, pattern) for pattern in c.paths)}
-        if owners - allowed:
-            gaps.append(f"Changed path is outside reviewed component scope: {path}: {', '.join(sorted(owners - allowed))}")
-        if not owners and any(matches(path, pattern) for pattern in change.paths):
+        bound = set(owners(path, (*snapshot.model.components, *baseline.model.components)))
+        if bound - allowed:
+            gaps.append(f"Changed path is outside reviewed component scope: {path}: {', '.join(sorted(bound - allowed))}")
+        if not bound and any(matches(path, pattern) for pattern in change.paths):
             # Explicitly reviewed non-component files (e.g. tests/docs). They
             # cannot excuse a source edit in an excluded component.
             message = f"Changed path has no declared component: {path}"
             gaps = [gap for gap in gaps if gap != message]
-        elif not owners and path not in dict(snapshot.sources):
+        elif not bound and path not in dict(snapshot.sources):
             gaps.append(f"Changed path is outside reviewed file scope: {path}")
     gaps += [f"Open question: {q}" for q in change.open_questions]
     obligations = {v["id"]: {**v, "required_by": list(v["required_by"])} for v in impact["verification"]}

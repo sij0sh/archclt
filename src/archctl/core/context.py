@@ -8,9 +8,9 @@ from pathlib import Path
 import re
 import yaml
 
-from archctl.core.io import (InputError, contained, digest, load_document, matches,
-                             obj, relative_path, stable_id, string, strings, UniqueLoader)
-from archctl.core.models import Snapshot
+from archctl.core.io import (InputError, contained, digest, load_document, obj,
+                             relative_path, stable_id, string, strings, UniqueLoader)
+from archctl.core.models import Snapshot, owners
 
 SKIP = {".git", ".archctl", ".briefcase", "__pycache__", ".venv", "venv", "node_modules",
         "target", "dist", "build", ".pytest_cache"}
@@ -78,10 +78,10 @@ def load_bindings(root: Path, snapshot: Snapshot | None, files: list[str],
         raise InputError("Component IDs and aliases must be unambiguous")
     gaps = []
     for path in sorted(set(files) | set(planned)):
-        owners = [b for b in bindings.values() if any(matches(path, p) for p in b.paths)]
-        if len(owners) > 1:
+        bound = owners(path, bindings.values())
+        if len(bound) > 1:
             gaps.append(f"Ambiguous component binding: {path}")
-        if owners or (Path(path).suffix.lower() not in CODE and path not in planned):
+        if bound or (Path(path).suffix.lower() not in CODE and path not in planned):
             continue
         parts = Path(path).parts
         width = 2 if len(parts) > 2 and parts[0] in {"src", "app", "lib", "packages"} else 1
@@ -93,10 +93,6 @@ def load_bindings(root: Path, snapshot: Snapshot | None, files: list[str],
         patterns = (*previous.paths, path) if previous else (path,)
         bindings[ident] = Binding(ident, patterns)
     return sorted(bindings.values(), key=lambda b: b.id), sorted(set(gaps))
-
-
-def owners(path: str, bindings: list[Binding]) -> list[str]:
-    return [b.id for b in bindings if any(matches(path, p) for p in b.paths)]
 
 
 def terms(text: str) -> set[str]:

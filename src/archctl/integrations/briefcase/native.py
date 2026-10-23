@@ -19,7 +19,7 @@ from typing import Any, Iterator
 
 from archctl.core.io import (InputError, contained, file_digest, matches,
                              source_files)
-from archctl.core.models import Snapshot
+from archctl.core.models import Snapshot, owners
 
 SCHEMA = "archctl.evidence.v2"
 PRODUCER = "briefcase-native-exporter"
@@ -90,11 +90,6 @@ def _paged(binary: str, root: Path, database: Path, operation: str,
 def _version(binary: str, root: Path) -> str:
     output = _run(binary, root, ["--version"]).strip()
     return output.split()[-1] if output else "unknown"
-
-
-def _owners(snapshot: Snapshot, relative: str) -> list[str]:
-    return [component.id for component in snapshot.model.components
-            if any(matches(relative, pattern) for pattern in component.paths)]
 
 
 def _supported(relative: str) -> bool:
@@ -302,11 +297,11 @@ def export_evidence(root: Path, snapshot: Snapshot, *, binary: str = "briefcase"
     gaps.extend(_unsupported_gaps(files))
     owner: dict[str, str] = {}
     for relative in files:
-        owners = _owners(snapshot, relative)
-        if len(owners) == 1:
-            owner[relative] = owners[0]
+        bound = owners(relative, snapshot.model.components)
+        if len(bound) == 1:
+            owner[relative] = bound[0]
         else:
-            gaps.append(f"File has {len(owners)} component bindings: {relative}")
+            gaps.append(f"File has {len(bound)} component bindings: {relative}")
     for component in snapshot.model.components:
         if not any(owner.get(relative) == component.id for relative in files):
             gaps.append(f"Component {component.id} has no source files")

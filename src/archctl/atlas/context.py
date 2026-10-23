@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections import deque
 from pathlib import Path
 
-from archctl.core.context import Binding, owners, terms
+from archctl.core.context import Binding, terms
 from archctl.core.io import InputError, contained, digest, file_digest, matches
 from archctl.core.memory import Memory, freshness as memory_freshness
-from archctl.core.models import Observations, Snapshot
+from archctl.core.models import Observations, Snapshot, owners
 
 
 def _score(task_terms: set[str], text: str) -> int:

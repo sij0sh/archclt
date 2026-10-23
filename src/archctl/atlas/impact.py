@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 
 from archctl.core.enforcement import add_reason, policy_obligation, version
-from archctl.core.io import digest, matches, relative_path, string
-from archctl.core.models import Observations, Snapshot
+from archctl.core.io import digest, relative_path, string
+from archctl.core.models import Observations, Snapshot, owners
 
 
 def build_impact(snapshot: Snapshot, observations: Observations, paths: list[str],
@@ -29,13 +29,13 @@ def build_impact(snapshot: Snapshot, observations: Observations, paths: list[str
         for component in model.components:
             affected[component.id].add("repository_check")
     for path in paths:
-        owners = [c.id for c in model.components if any(matches(path, p) for p in c.paths)]
-        if not owners:
+        owned = owners(path, model.components)
+        if not owned:
             if path not in dict(snapshot.sources):
                 gap(f"Changed path has no declared component: {path}", "scope")
-        elif len(owners) > 1:
-            gap(f"Changed path maps to multiple components: {path}: {', '.join(owners)}", "scope")
-        for owner in owners:
+        elif len(owned) > 1:
+            gap(f"Changed path maps to multiple components: {path}: {', '.join(owned)}", "scope")
+        for owner in owned:
             affected[owner].add("direct_change")
     if not paths and not all_components:
         gap("No concrete changed paths or repository-wide scope supplied", "scope")

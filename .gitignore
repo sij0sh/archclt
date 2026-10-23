@@ -18,5 +18,6 @@ validation/demo-results.json
 /node_modules/
 *.tgz
 .agents/
+.pi/
 /PKG-INFO
 /setup.cfg

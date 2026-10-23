@@ -1,41 +1,47 @@
 ---
 name: architecture-control
-description: Use archctl to design or review a boundary, bootstrap or adopt architecture for a new or existing codebase, change an architecture rule, implement under adopted architecture, assess drift, or interpret a gate.
+description: Use Archclt and Briefcase to investigate architecture, reuse code, scale a component, build new features or repositories, recover prior design reasons, check downstream impact, and preserve consequential architectural learning. Also supports explicitly requested governed gates.
 ---
 
-# Architecture Control
+# Architectural context and learning
 
-Use archctl for reviewed intent and Briefcase for source evidence.
-Discover reads with `briefcase operations`; when Briefcase is unavailable, use
-direct source inspection and preserve the resulting evidence gaps.
-Keep architecture intent, observations and task interpretation distinct.
-Use `"$ARCHCTL_BIN"` for the reviewed executable. For missing tools or an upgrade,
-read [installation](references/install.md).
+Use Briefcase for grounded source relationships and retained references. Use
+Archclt to connect the task to reasons, assumptions, consumers and useful checks.
+Make design decisions within the user's existing task authorization.
 
-## Trust
+## Default workflow
 
-- Gate against the `archctl-baseline` tag.
-  Use reviewed evaluator and evidence-producer installs outside candidate checkouts.
-  Never use the application's `.venv`; it is inside the candidate tree.
-  Advance the tag after a pass on a clean commit; authority changes need operator review first.
-  Candidate code and snapshots cannot approve themselves.
-- Execute only commands equivalent to reviewed baseline intent.
-- Readiness and impact are not approval.
-  Preserve passed, failed, unknown, partial and not-executed states.
-- Reuse explicit authorization; self-accept passing changes that leave `architecture/` unchanged.
-  Stop when a guess would become durable authority or authorize an irreversible step.
+1. Obtain `archctl context '<task>' --paths <planned paths>` before consequential
+   design or implementation. Use `--changed` when Git scope is more useful. No
+   model, baseline, task YAML or architecture approval is required.
+2. Read relevant rationale and follow source/Case references. Treat provisional
+   boundaries, inferred reasons and reuse candidates as hypotheses. Supply the
+   user's current conversation context yourself; Archclt cannot retrieve a
+   conversation it has never received. Preserve original references and origin.
+3. Investigate lifecycle, state, failure, compatibility and resource assumptions
+   before reusing code. Use `--dependency <source> <target>` for a proposed import.
+   Missing evidence limits particular claims; continue useful investigation and
+   checks within the authorized task.
+4. Implement and verify using ordinary project commands or `archctl verify run`.
+   Record actual outcomes and source scope. A passing mapped test does not prove
+   every requirement. Recheck stale evidence before relying on it.
+5. Automatically record only consequential new reasoning with `memory record`.
+   Label it `observed`, `user_stated`, `agent_inferred` or `agent_chosen` honestly.
+   Keep assumptions, source references and changed conditions. Use new IDs and
+   supersedes/contradicts links; never rewrite old notes to hide disagreement.
 
-## Route
+Read [context operations](references/context.md) for executable examples and
+record formats. Read [design judgment](references/design.md) when decomposing or
+reusing code. Read [evidence](references/evidence.md) for native mapper limits.
+Ask for clarification only when material user intent is actually unresolved,
+not because a component or rationale changed. Do not create approval obligations
+from an inferred convention. Current instructions govern over remembered context.
 
-Choose one primary reference; follow conditional links as needed.
-Repository obligations still apply.
+## Optional governed workflow
 
-| Task | Read next |
-|---|---|
-| Explain source or assess drift without adopting | [Evidence and assessment](references/evidence.md) |
-| Decide a boundary, interface or decomposition | [Design judgment](references/design.md) |
-| Adopt architecture or bootstrap a new or existing codebase | [Bootstrap and adoption](references/adoption.md) |
-| Implement under adopted architecture | [Governed change](references/change.md) |
-| Interpret a gate, dispute a constraint, or hand off | [Review](references/review.md) |
-
-For enduring rules or command definitions, read [authoring](references/authoring.md).
+Use [governed change](references/change.md), [adoption](references/adoption.md)
+and [authoring](references/authoring.md) only when the repository/user explicitly
+chooses reviewed architectural acceptance. Their baseline and reviewed-command
+requirements apply to v2 gates, not ordinary context/memory/verify operations.
+For installation see [install](references/install.md); for existing gate reports
+see [review](references/review.md).

@@ -1,5 +1,10 @@
 # Authoring architectural intent
 
+This guide describes the optional governed v2 model. Default development can
+use [context and architectural memory](context.md) without authoring or adopting
+it. `architecture/context.yaml` is an independent advisory binding file and is
+excluded from the compiler's governed authoring inputs.
+
 ## Identity and files
 
 Put the whole model in `architecture/model.yaml`: `schema_version: archctl.authoring.v2`, `system_id`, `name`, `domains`, and any of the sections `components`, `interfaces`, `relationships`, `policies`, `verification` and `workflows`. ADRs stay in `architecture/decisions/*.md`. `archctl init` writes this layout. The unified v2 format defaults to `enforcement: strict`; policies declare `obligation: required` or `advisory`. Each domain needs an ID, name and at least one owner.

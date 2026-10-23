@@ -1,99 +1,83 @@
 # Archclt
 
-Archclt helps coding agents change a Python project while preserving reviewed
-architecture. It connects a scoped change contract to component boundaries,
-ADRs, source evidence and real verification commands, then reports `passed`,
-`failed`, `unknown` or `error` with retained evidence.
+Archclt gives coding agents architectural context and memory alongside Briefcase.
+It brings together relevant code relationships, reasons behind existing choices,
+potential reuse, downstream impact and verification results so the agent can
+choose and evolve a design with less repeated investigation.
 
-The command is **`archctl`**. The npm package is **`@archclt/archctl`** and the
-Python package is **`archclt`**. Python 3.11+ and Git are required; the npm
-launcher also needs Node.js 20+. Linux and macOS are the initial supported
-platforms; Windows packaging remains experimental.
+The command is **`archctl`** and the Python package is **`archclt`**. Python 3.11+
+is required. Git is needed for `--changed` and the optional governed workflow.
 
-## Install
+## Start without adoption
 
 ```bash
-npm install -g https://github.com/sij0sh/archclt/releases/download/v0.2.0/archclt-archctl-0.2.0.tgz
-archctl setup
-export ARCHCTL_BIN="$(archctl --runtime-path)"
-archctl install-skill "$HOME/.agents/skills"
+python3 -m pip install -e .
+archctl context 'Reuse API batching for concurrent workers' \
+  --paths src/api/batching.py src/worker/jobs.py
 ```
 
-The npm package bundles the exact Python wheel. Setup creates an isolated
-runtime outside your project and installs its pinned PyYAML dependency; it
-requires network access on first setup. `ARCHCLT_PYTHON` selects Python and
-`ARCHCLT_HOME` selects an external runtime directory. There is no install hook.
-
-The registry name is `@archclt/archctl`; after its first registry publication,
-`npm install -g @archclt/archctl@0.2.0` selects the same release.
-
-For a direct Python installation:
+No architecture model, approval tag or task contract is needed. Missing evidence
+and provisional components remain visible in the context packet. The agent makes
+the design choice within the user's task, runs useful checks, and records reasons
+that would be costly for the next agent to forget.
 
 ```bash
-pipx install https://github.com/sij0sh/archclt/releases/download/v0.2.0/archclt-0.2.0-py3-none-any.whl
-archctl --version
+archctl context 'Reuse batching' --paths src/worker/jobs.py src/api/batching.py \
+  --dependency src/worker/jobs.py src/api/batching.py
+archctl memory record --input .archctl/reason.json
+archctl verify run --task 'Worker regression' --paths 'src/worker/**' \
+  --command '["python3", "-m", "unittest", "tests.test_worker"]'
 ```
 
-Use the versioned GitHub release artifacts before the first registry publication.
-See [installation](docs/install.md) for wheel installation and the skill bundle.
+[The context guide](docs/context.md) covers rationale records, conversation
+references, optional component aliases, hypothetical dependencies, independent
+verification and agent integration. Copy the bundled
+`skills/architecture-control/` directory into your coding agent's skill location
+to apply the workflow at task start and completion.
 
-Native source evidence requires a compatible, separately installed
-[Briefcase](https://github.com/sij0sh/briefcase) executable. Set `BRIEFCASE_BIN`
-to its absolute path. You can also supply a trusted normalized evidence bundle.
-Read the [compatibility and evidence limits](docs/briefcase-integration.md).
+## Briefcase evidence
 
-## Adopt a Python project
-
-From its Git root, run `archctl init`. This creates an empty, unreviewed
-`architecture/model.yaml`. Use the bundled `architecture-control` skill to
-inspect the source and propose real components, ADRs, constraints and commands.
-Review that intent, commit it and choose the baseline:
+Briefcase owns source analysis and retained evidence. Archclt reuses a supplied
+`archctl.evidence.v2` bundle or the existing native Python import mapper:
 
 ```bash
-git tag archctl-baseline <reviewed-full-commit-sha>
-archctl briefcase export-evidence --source-root src
-archctl gate --baseline-ref "$(git rev-parse archctl-baseline)" --scope all --run
+archctl context 'Change the payment response' --paths src/payments/api.py \
+  --refresh-evidence --source-root src
 ```
 
-For a change, record `.archctl/change.yaml` with component/file scope and
-acceptance criteria mapped to reviewed verification IDs, then run:
+Set `BRIEFCASE_BIN` or pass `--briefcase`. Native mapping remains limited to the
+documented Briefcase 0.1.0 Python imports. Other languages can be inventoried and
+retrieved as source candidates; their dependencies are not inferred. Conversation
+and Case references come from the coding agent rather than a session API.
+Read [compatibility and evidence limits](docs/briefcase-integration.md).
 
-```bash
-archctl gate --baseline-ref "$(git rev-parse archctl-baseline)" \
-  --change .archctl/change.yaml --source-root src --run
-```
+## Optional architectural gates
 
-Read the newly printed run directory's `gate-summary.md` and JSON. A pass
-covers required obligations within reported scope and coverage. Missing or
-stale evidence, unexecuted required checks and unresolved scope remain unknown.
-A gate never approves architecture authority or advances a baseline itself.
+The existing reviewed-model workflow remains available through `init`, `model`,
+`status`, `impact`, `guard`, `observe` and `gate`. Its v2 meanings, required
+obligations, baseline checks and execution restrictions remain intact. Choose it
+explicitly when architectural acceptance needs a reviewed baseline. Context and
+ordinary verification never require that adoption.
 
-## Contracts and limits
+See [authoring](docs/authoring.md), [CLI contracts](docs/cli-contracts.md),
+[installation](docs/install.md), [support status](docs/status.md),
+[architecture](ARCHITECTURE.md) and [release notes](CHANGELOG.md).
 
-One v2 contract family defines authoring, evidence, impact, verification and
-reports. Strict enforcement is the default; advisory policy obligations remain
-explicit and visible. [Migration](docs/authoring.md#obligation-strength) converts
-legacy intent without overwriting it.
-
-Native mapping assesses Python imports. Dynamic imports, other languages and
-runtime structure remain explicit gaps. Reviewed commands execute application
-code with your privileges. Run the evaluator outside the candidate repository;
-Archclt is a review workflow, not a security sandbox or merge controller.
-
-## Develop
+## Develop and validate
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+PYTHONPATH=src .venv/bin/python scripts/demo_context.py
 PYTHONPATH=src .venv/bin/python scripts/demo.py
-.venv/bin/python scripts/validate.py
 ```
 
-Storefront is a development fixture. Generated validation results stay local or
-become CI artifacts. See [contributing](CONTRIBUTING.md),
-[architecture](ARCHITECTURE.md), [authoring](docs/authoring.md),
-[CLI contracts](docs/cli-contracts.md), [support status](docs/status.md) and
-[release notes](CHANGELOG.md).
+The context demo exercises cold-start reasoning, reuse, changed assumptions and
+verification without architecture adoption. The original demo exercises governed
+behavior. Native interoperability and optional schema skips remain visible.
+
+The release workflow builds the Python wheel, source archive, skill ZIP and npm
+tarball from the tagged commit. npm launcher tests run with `npm test`.
 
 MIT licensed.

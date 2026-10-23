@@ -1,5 +1,12 @@
 # Install and select tools
 
+For ordinary context-first work, use the project's selected Python environment
+or an installed `archclt` distribution, and copy this skill directory to the
+agent's skill location. No external approved evaluator or baseline is required.
+`archctl context` works without Briefcase, retaining dependency gaps; refresh
+only with a compatible installed Briefcase executable. The reviewed installation
+procedures below apply to optional governed v2 acceptance.
+
 Install the versioned `@archclt/archctl` npm package or `archclt` Python package
 outside the application. With npm, run `archctl setup`, then set `ARCHCTL_BIN`
 to the absolute path printed by `archctl --runtime-path`. With pipx, select the

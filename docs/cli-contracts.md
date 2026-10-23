@@ -2,6 +2,23 @@
 
 `archctl` is a local CLI. Agents should prefer JSON output and treat the exit code as the command outcome.
 
+## Default context and verification commands
+
+`context`, `memory` and `verify` use the advisory contracts under
+`contracts/context/v1`; [the context guide](context.md) documents their input
+formats. They require no baseline or approved model. Context exit 0 means
+`assembled`, including useful packets with partial evidence. `memory record`
+appends an immutable reason with provenance and returns `recorded`.
+
+`verify run` uses an explicit JSON argument vector or existing model check ID.
+`verify import` retains a supplied harness record. Actual execution outcome and
+applicability to current source remain separate. Exit 0 means passed with current
+recorded inputs, 1 failed execution, 2 unresolved outcome/applicability, and 3
+invalid input. These outcomes make no architectural acceptance claim.
+
+The conventions and baseline requirements below describe the optional v2 model
+and gate workflow, whose contracts are preserved for compatibility.
+
 ## Conventions
 
 - JSON is written to stdout. Errors are written to stderr as one `archctl.error.v2` object.
@@ -100,7 +117,7 @@ Shape:
   "operation": "status",
   "root": "/absolute/repository/root",
   "status": "ready",
-  "tool": {"name": "archctl", "version": "0.2.0"},
+  "tool": {"name": "archctl", "version": "0.3.0"},
   "model": {
     "state": "valid",
     "directory": "architecture",

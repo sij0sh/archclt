@@ -1,8 +1,20 @@
 # Briefcase integration boundary
 
+## Context-first integration
+
+`archctl context` can use normalized evidence without a governed model; temporary
+bindings come from discovered paths and optional context overrides. The same native
+mapper can be requested with `--refresh-evidence --source-root src`. Its Python
+scope remains unchanged. Conversation/Case provenance is supplied by the coding
+agent through rationale records and context references; no unverified session API
+is called. A failed refresh is a limitation and never silently reuses old evidence.
+
+All baseline and reviewed-producer requirements below apply to the optional
+governed workflow. Context retains provenance and coverage without claiming a gate pass.
+
 ## Compatible release
 
-Archclt 0.2.0 maps Briefcase 0.1.0 Python imports. Download its reviewed native
+Archclt 0.3.0 maps Briefcase 0.1.0 Python imports. Download its reviewed native
 archive and checksums from https://github.com/sij0sh/briefcase/releases/tag/v0.1.0.
 Install outside source checkouts and set `BRIEFCASE_BIN` to the absolute executable.
 Linux/macOS x64 and ARM64 have native build lanes. The producer needs Python 3.11+

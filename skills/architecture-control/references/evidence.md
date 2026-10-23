@@ -1,5 +1,14 @@
 # Evidence and read-only assessment
 
+For ordinary implementation, start with `archctl context '<task>' --paths ...`.
+It consumes optional evidence without adoption and can refresh supported imports
+with `--refresh-evidence --source-root src`. Rationale and original conversation
+references come from the coding agent and retained memory. Read the actual source
+before inferring lifecycle or reuse suitability. Run useful checks independently
+through ordinary project tooling or `verify run`; evidence gaps limit claims.
+
+The reviewed-baseline procedures below apply only to optional governed workflows.
+
 Use Briefcase for retained evidence and live files for current bytes.
 Reuse relevant fresh Cases rather than repeating discovery.
 Keep observed behavior, reviewed declarations and proposed changes distinct.

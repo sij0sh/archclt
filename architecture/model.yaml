@@ -63,6 +63,7 @@ components:
   - src/archctl/cli.py
   - src/archctl/cli_gate.py
   - src/archctl/cli_report.py
+  - src/archctl/cli_context.py
 relationships:
 - id: atlas-core
   source: atlas

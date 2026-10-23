@@ -82,6 +82,13 @@ def installed_smoke(wheel: Path) -> dict:
         if (neutral_status.get("model", {}).get("state") != "valid"
                 or neutral_status.get("status") != "needs_attention"):
             raise RuntimeError("Installed package did not report a neutral scaffold as a valid, unready model")
+        context = json.loads(command([*neutral_cli, "context", "Create a worker", "--paths", "src/worker.py"],
+                                     env=env).stdout)
+        independent = json.loads(command([*neutral_cli, "verify", "run", "--task", "Context smoke",
+            "--paths", "architecture/model.yaml", "--command", json.dumps([sys.executable, "-c", "pass"])], env=env).stdout)
+        if (context["status"] != "assembled" or independent["result"]["status"] != "passed"
+                or independent["applicability"]["status"] != "current"):
+            raise RuntimeError("Installed context/verification required architecture adoption")
         status = json.loads(command([*cli, "status", "--drift", "--format", "json"], env=env).stdout)
         impact = json.loads(command([*cli, "impact", "Installed-package change", "--paths", "app/orders/api.py",
                                      "--evidence", ".archctl/evidence.json"], env=env).stdout)
@@ -124,6 +131,7 @@ def installed_smoke(wheel: Path) -> dict:
             raise RuntimeError("Installed package did not complete the expected workflow")
         selective = selective_smoke(app, cli, env)
         return {"scoped_preparation": preparation, "selective_v2": selective, "status": "passed",
+                "advisory_context": context["status"], "independent_verification": independent["result"]["status"],
                 "neutral_status": neutral_status["status"], "isolated_import": True,
                 "status_contract": status["status"],
                 "impact": impact["assessment"], "guard": guard["status"], "workflow": workflow["status"],
@@ -165,6 +173,7 @@ def main() -> int:
     try:
         stage = "demo"
         command([sys.executable, "scripts/demo.py", str(destination / "demo-results.json")])
+        summary["context_demo"] = json.loads(command([sys.executable, "scripts/demo_context.py"]).stdout)
         stage = "model-lock"
         write_json(destination / "model.lock.json", compile_model(ROOT).to_dict())
         stage = "wheel"

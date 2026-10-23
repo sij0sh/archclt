@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- Default agent workflow assembles task-specific architectural context without adoption.
+- Attributable immutable rationale records, source freshness, aliases, conflict and replacement links.
+- Provisional components, lexical source candidates and hypothetical import-cycle investigation.
+- Verification and harness-result import independent of architecture approval.
+- Separate advisory v1 contracts; governed v2 gate semantics preserved.
+- Updated coding-agent skill, cold-start demo and decision-oriented regression tests.
+- Python-source packaging tolerates optional npm/hosted-CI directories absent from an input archive.
+
 ## 0.2.0
 
 First public distribution under `sij0sh/archclt`.

@@ -1,17 +1,24 @@
 # Support status
 
-The first public release is 0.2.0. Its command is `archctl`; packages are
-`archclt` (Python) and `@archclt/archctl` (npm). Exchange contracts are v2.
+The 0.3.0 source update makes context, architectural memory and task-authorized
+verification the normal agent workflow. These use independent advisory v1 contracts.
+The optional model/impact/guard/gate/observe workflow retains its v2 semantics.
 
-Supported: Python 3.11+, Git, Linux and macOS, static Python import mapping,
-local gates, explicit required/advisory obligations, task contracts and reviewed
-command execution. Windows packaging is experimental pending platform validation.
+Supported: Python 3.11+, bounded source inventories and lexical retrieval, optional
+model/standalone ADR rationale, provisional components and rename aliases, memory
+capture with provenance and explicit conflict/replacement links, hypothetical
+imports, scoped execution records and harness import. Tests target Linux; macOS
+and Windows process behavior requires platform validation for this update.
 
-Briefcase is an external native evidence producer. A passing package test does
-not establish native interoperability; release validation reports skips explicitly.
-Runtime coverage, dynamic imports and non-Python mapping remain unsupported.
-Hosted approval, graph UI, tracing collection and new policy kinds are deferred.
+Briefcase remains the external source evidence producer. Native mapping covers
+the documented Python imports only. Other source file extensions can be retrieved
+without implying dependency coverage. Dynamic imports, production runtime coverage,
+trace collection, hosted approval and graph UI remain outside the implementation.
 
-Generated tests, evaluations and gate runs are kept in ignored local directories
-or release/CI artifacts. Historical dogfood campaigns are retained privately;
-the public repository starts from a clean source snapshot.
+The coding agent supplies semantic interpretation and original conversation
+references. Retrieval does not access unprovided chat history. Source freshness,
+unknowns, missing observations and unexecuted checks remain explicit.
+
+The npm launcher and hosted release workflows are part of the release source.
+`npm test` covers the launcher; hosted workflows run in GitHub Actions. Read
+[implementation notes](context-implementation.md) for scope and evaluation limits.

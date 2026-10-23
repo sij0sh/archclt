@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "archclt"
 dynamic = ["version"]
-description = "Local architecture intent, evidence and verification for coding agents"
+description = "Architectural context, memory and verification for coding agents"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

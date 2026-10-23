@@ -1,17 +1,31 @@
 {
   "name": "@archclt/archctl",
-  "version": "0.2.0",
-  "description": "Local architecture intent, evidence and verification for coding agents",
+  "version": "0.3.0",
+  "description": "Architectural context, memory and verification for coding agents",
   "license": "MIT",
-  "repository": {"type": "git", "url": "git+https://github.com/sij0sh/archclt.git"},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sij0sh/archclt.git"
+  },
   "homepage": "https://github.com/sij0sh/archclt#readme",
   "bugs": "https://github.com/sij0sh/archclt/issues",
-  "engines": {"node": ">=20"},
-  "bin": {"archctl": "npm/bin/archctl.cjs"},
-  "files": ["npm/bin/", "npm/runtime/", "skills/architecture-control/"],
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "archctl": "npm/bin/archctl.cjs"
+  },
+  "files": [
+    "npm/bin/",
+    "npm/runtime/",
+    "skills/architecture-control/"
+  ],
   "scripts": {
     "test": "node --test npm/test/*.test.cjs",
     "prepack": "python3 scripts/build_npm.py"
   },
-  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/"}
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

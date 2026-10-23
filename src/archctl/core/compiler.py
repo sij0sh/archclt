@@ -188,7 +188,9 @@ def authoring_files(directory: Path) -> list[Path]:
     """Return candidate authoring files without interpreting their contents."""
     if not directory.is_dir():
         return []
-    return [path for path in sorted(directory.iterdir()) if path.suffix in AUTHORING_SUFFIXES]
+    # Context bindings are optional advisory overrides, not governed authoring inputs.
+    return [path for path in sorted(directory.iterdir()) if path.suffix in AUTHORING_SUFFIXES
+            and path.name != "context.yaml"]
 
 
 def has_authoring_model(directory: Path) -> bool:

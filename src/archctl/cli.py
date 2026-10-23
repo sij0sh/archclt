@@ -23,6 +23,7 @@ from archctl.core.io import InputError, contained, matches, write_json, write_te
 from archctl.core.models import ACTIVE_DECISIONS, Snapshot
 from archctl.core.change import read_change
 from archctl.cli_gate import EXIT, changed_paths, run_gate
+from archctl.cli_context import add_commands as context_commands, dispatch as context_dispatch
 from archctl.guard.evaluate import check
 from archctl.integrations.briefcase.adapter import check_freshness, parse_evidence, read_evidence
 from archctl.integrations.briefcase.native import PRODUCER, SUPPORT, export_evidence
@@ -37,12 +38,13 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 def parser() -> argparse.ArgumentParser:
-    cli = ArgumentParser(prog="archctl", description="Repository-local architectural intent and verification")
+    cli = ArgumentParser(prog="archctl", description="Architectural context, memory and verification for coding agents")
     cli.add_argument("--version", action="version", version=__version__)
     cli.add_argument("--root", type=Path, default=Path("."), help="Application repository root (global option)")
     cli.add_argument("--model-dir", default="architecture", help="Repository-relative model directory")
     commands = cli.add_subparsers(dest="command", required=True)
-    init = commands.add_parser("init", help="Create a starter architecture without overwriting files")
+    context_commands(commands)
+    init = commands.add_parser("init", help="Create an optional governed model; context needs no initialization")
     gate = commands.add_parser("gate", help="Verify locally against an explicitly reviewed Git commit")
     gate.add_argument("--baseline-ref", required=True, help="Full reviewed Git commit SHA")
     gate.add_argument("--change", type=Path, help="Reviewed archctl.change.v2 task contract")
@@ -364,6 +366,10 @@ def _status_text(report: dict) -> str:
 
 def dispatch(args: argparse.Namespace) -> int:
     root = args.root.resolve()
+    if args.command in {"context", "memory", "verify"}:
+        paths = (changed_paths(root, args.base_ref) if getattr(args, "changed", False)
+                 else getattr(args, "paths", []))
+        return context_dispatch(root, args, paths)
     if args.command == "gate":
         code, result = run_gate(root, args)
         print(json.dumps(result, indent=2))
@@ -374,7 +380,7 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.model_dir != "architecture":
             raise InputError("init currently uses architecture/; rename it afterwards to use --model-dir")
         _emit(args, {"created": initialize(root),
-                     "next": "Review the starter model, compile it, and establish a trusted baseline"}, root)
+                     "next": "Use context without adoption, or review and baseline this optional model for governed gates"}, root)
         return 0
     if args.command == "status":
         if not root.is_dir():

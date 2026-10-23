@@ -3,7 +3,7 @@
 Release source lives at https://github.com/sij0sh/archclt. The Python distribution
 is `archclt`, npm is `@archclt/archctl`, and the entrypoint is `archctl`.
 Versions in `src/archctl/__init__.py` and `package.json` must agree. Contract
-versions are independent: the supported family is v2.
+versions are independent: governed v2 and advisory context v1.
 
 ## Validate and build
 

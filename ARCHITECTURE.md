@@ -1,5 +1,34 @@
 # Architecture Control Plane
 
+## Context-first workflow
+
+The default agent integration supplies architectural context and durable reasons.
+`cli_context.py` composes Core, Atlas and external integrations without requiring
+governed adoption. Core owns attributable immutable memory and optional identity
+overrides. Atlas builds an advisory packet from task scope, reasons, source
+candidates and normalized evidence; it never executes commands. Integrations
+own the shared bounded executor and source-scoped execution records.
+
+Memory origins (`observed`, `user_stated`, `agent_inferred`, `agent_chosen`)
+remain separate from source observations and optional declared intent. Records
+preserve original references, assumptions and supersession/conflict links; an
+agent interpretation is never silently promoted to a user decision. Retrieval
+uses task words, path/component scope and graph relationships. Semantic judgment
+stays with the coding agent. No new analyzer, graph database or LLM service is added.
+
+Provisional path bindings can be overridden in `architecture/context.yaml` with
+stable IDs and aliases. This file is excluded from governed authoring snapshots.
+The context packet can include partial evidence and stale reasoning without
+becoming a passing architecture claim. Actual command outcomes and applicability
+to current inputs remain separate. Commands come from the agent's explicit task
+execution, never from a retrieved suggestion. Source identity is scoped, not an
+attestation of external dependencies or a production deployment.
+
+Advisory contracts live in `contracts/context/v1/`. The existing v2 workflow below
+remains available when reviewed architectural acceptance is explicitly selected.
+Its baseline trust and execution prerequisites apply only to governed commands.
+See ADR-005 and [the context guide](docs/context.md).
+
 ## Boundaries
 
 This is one package with a typed shared core and independent feature modules. It is intentionally local: the application's architecture and evidence files live in its repository; the tool does not maintain a second graph database.

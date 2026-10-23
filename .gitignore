@@ -17,3 +17,6 @@ validation/demo-results.json
 /npm/runtime/
 /node_modules/
 *.tgz
+.agents/
+/PKG-INFO
+/setup.cfg

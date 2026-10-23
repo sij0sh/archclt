@@ -48,6 +48,44 @@ def _result(check: Verification, snapshot: Snapshot, observations: Observations,
             "output_truncated": False}
 
 
+def execute_command(root: Path, command: tuple[str, ...], cwd: str,
+                    timeout_seconds: int) -> dict:
+    """Run a caller-selected argument vector independently of architecture policy."""
+    if not command or any(not isinstance(arg, str) or not arg for arg in command):
+        raise ValueError("command must be a nonempty argument vector")
+    if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 300:
+        raise ValueError("timeout_seconds must be between 1 and 300")
+    directory = contained(root, cwd)
+    result = {"status": "unknown", "message": "Command did not start", "returncode": None,
+              "duration_seconds": 0.0, "stdout": "", "stderr": "", "output_truncated": False}
+    started = time.monotonic()
+    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        process = None
+        try:
+            process = subprocess.Popen(command, cwd=directory, stdin=subprocess.DEVNULL,
+                stdout=stdout, stderr=stderr, shell=False, start_new_session=os.name == "posix")
+            code = process.wait(timeout=timeout_seconds)
+            result.update(status="passed" if code == 0 else "failed", returncode=code,
+                          message="Command completed successfully" if code == 0 else "Command returned a nonzero exit code")
+        except subprocess.TimeoutExpired:
+            if process is not None:
+                _kill(process)
+            result["message"] = f"Command timed out after {timeout_seconds}s"
+        except OSError as exc:
+            result["message"] = f"Command could not start: {exc}"
+        except BaseException:
+            if process is not None:
+                _kill(process)
+            raise
+        result["duration_seconds"] = round(time.monotonic() - started, 4)
+        for stream, name in ((stdout, "stdout"), (stderr, "stderr")):
+            size = stream.tell()
+            stream.seek(0)
+            result[name] = stream.read(65536).decode("utf-8", errors="replace")
+            result["output_truncated"] |= size > 65536
+    return result
+
+
 def run_checks(root: Path, snapshot: Snapshot, baseline: Snapshot,
                observations: Observations, ids: list[str], *, execute: bool,
                environment: str, freshness: Callable[[], list[Finding]]) -> list[dict]:
@@ -67,37 +105,9 @@ def run_checks(root: Path, snapshot: Snapshot, baseline: Snapshot,
         elif freshness() or authoring_freshness(root, snapshot):
             result.update(status="unknown", message="Source or model pins are stale; command was not executed")
         else:
-            cwd = contained(root, check.cwd)
-            started = time.monotonic()
-            with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-                process = None
-                try:
-                    # Lists only, shell=False. The reviewed executable can still
-                    # have side effects; this is an executor, not a sandbox.
-                    process = subprocess.Popen(check.command, cwd=cwd, stdin=subprocess.DEVNULL,
-                        stdout=stdout, stderr=stderr, shell=False, start_new_session=os.name == "posix")
-                    code = process.wait(timeout=check.timeout_seconds)
-                    result.update(status="passed" if code == 0 else "failed", returncode=code,
-                                  message="Command completed successfully" if code == 0 else "Command returned a nonzero exit code")
-                except subprocess.TimeoutExpired:
-                    if process is not None:
-                        _kill(process)
-                    result.update(status="unknown", message=f"Command timed out after {check.timeout_seconds}s")
-                except OSError as exc:
-                    result.update(status="unknown", message=f"Command could not start: {exc}")
-                except BaseException:
-                    if process is not None:
-                        _kill(process)
-                    raise
-                result["duration_seconds"] = round(time.monotonic() - started, 4)
-                for stream, name in ((stdout, "stdout"), (stderr, "stderr")):
-                    size = stream.tell()
-                    stream.seek(0)
-                    raw = stream.read(65536)
-                    result[name] = raw.decode("utf-8", errors="replace")
-                    result["output_truncated"] |= size > len(raw)
-                if freshness() or authoring_freshness(root, snapshot):
-                    result.update(status="unknown", message="Source or architecture changed during execution; result cannot attest the candidate")
+            result.update(execute_command(root, check.command, check.cwd, check.timeout_seconds))
+            if freshness() or authoring_freshness(root, snapshot):
+                result.update(status="unknown", message="Source or architecture changed during execution; result cannot attest the candidate")
         results.append(result)
     return results
 

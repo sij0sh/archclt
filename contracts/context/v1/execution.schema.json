@@ -1,0 +1,166 @@
+{
+  "$id": "urn:archctl:context:v1:execution",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "cwd": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "environment": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "origin": {
+      "enum": [
+        "archctl",
+        "harness"
+      ]
+    },
+    "references": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_seconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "output_truncated": {
+          "type": "boolean"
+        },
+        "returncode": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unknown",
+            "not_executed"
+          ]
+        },
+        "stderr": {
+          "type": "string"
+        },
+        "stdout": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "duration_seconds",
+        "message",
+        "output_truncated",
+        "returncode",
+        "status",
+        "stderr",
+        "stdout"
+      ],
+      "type": "object"
+    },
+    "revision": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "archctl.execution.v1"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "gaps": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "paths": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "stable_during_execution": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "files",
+        "gaps",
+        "paths",
+        "stable_during_execution"
+      ],
+      "type": "object"
+    },
+    "started_at": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "task": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "timeout_seconds": {
+      "maximum": 300,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "command",
+    "cwd",
+    "environment",
+    "id",
+    "origin",
+    "references",
+    "result",
+    "schema_version",
+    "source",
+    "started_at",
+    "task",
+    "timeout_seconds"
+  ],
+  "type": "object"
+}

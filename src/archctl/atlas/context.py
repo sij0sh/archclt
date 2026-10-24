@@ -8,7 +8,7 @@ from pathlib import Path
 from archctl.core.context import Binding, terms
 from archctl.core.contracts import version
 from archctl.core.io import InputError, contained, digest, file_digest, matches
-from archctl.core.memory import Memory, freshness as memory_freshness
+from archctl.core.memory import Memory, memory_view
 from archctl.core.models import Observations, Snapshot, owners
 
 
@@ -163,9 +163,16 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
             gaps.append({"category": "coverage", "affects": sorted(missing),
                          "message": "These task components lack declared dependency analysis coverage"})
     successors: dict[str, list[str]] = {}
+    challengers: dict[str, list[str]] = {}
+    neighbors: dict[str, set[str]] = {record.id: set() for record in memories}
     for record in memories:
         for old in record.supersedes:
             successors.setdefault(old, []).append(record.id)
+        for other in record.contradicts:
+            challengers.setdefault(other, []).append(record.id)
+        for other in (*record.supersedes, *record.contradicts):
+            neighbors[record.id].add(other)
+            neighbors[other].add(record.id)
     successors = {key: sorted(set(value)) for key, value in successors.items()}
     def successor_values(record_id: str) -> tuple[str | None, list[str]]:
         values = successors.get(record_id, [])
@@ -177,23 +184,39 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         score = lexical + (8 if components & active_scope else 0) + (12 if _path_match(paths, record.paths) else 0)
         if not score:
             continue
-        value = record.to_dict()
+        value = memory_view(root, record)
         primary, ids = successor_values(record.id)
-        value.update(score=score, freshness=memory_freshness(root, record),
-                     superseded_by=primary, superseded_by_ids=ids, relevance="lexical_and_scope")
+        value.update(score=score, superseded_by=primary, superseded_by_ids=ids,
+                     contradicted_by=sorted(challengers.get(record.id, [])), relevance="lexical_and_scope")
         ranked.append((score, record.id, value))
-    selected_ids = {row[1] for row in ranked}
-    # Contradicting and replacement context travels with a match, not only on lexical coincidence.
+    matched_ids = {row[1] for row in ranked}
+    selected_ids = set(matched_ids)
+    pending = deque(sorted(matched_ids))
+    # Follow explicit relations in both directions, including conflicting branches.
+    # Bound delivery, not discovery: omitted reasons must remain discoverable.
+    while pending:
+        for related in sorted(neighbors[pending.popleft()] - selected_ids):
+            selected_ids.add(related)
+            pending.append(related)
     for record in memories:
-        if record.id not in selected_ids and (set(record.contradicts) & selected_ids or set(record.supersedes) & selected_ids
-                or any(record.id in {*r.contradicts, *r.supersedes} for r in memories if r.id in selected_ids)):
-            value = record.to_dict()
+        if record.id in selected_ids - matched_ids:
+            value = memory_view(root, record)
             primary, ids = successor_values(record.id)
-            value.update(score=0, freshness=memory_freshness(root, record),
-                         superseded_by=primary, superseded_by_ids=ids, relevance="related_record")
+            value.update(score=0, superseded_by=primary, superseded_by_ids=ids,
+                         contradicted_by=sorted(challengers.get(record.id, [])), relevance="related_record")
             ranked.append((0, record.id, value))
     ranked.sort(key=lambda row: (row[2]["superseded_by"] is not None, -row[0], row[1]))
     memory_items = [row[2] for row in ranked[:limit]]
+    omitted = ranked[limit:]
+    memory_retrieval = {"matched": len(matched_ids), "related": len(selected_ids - matched_ids),
+        "returned": len(memory_items), "omitted": len(omitted),
+        "omitted_records": [{"id": row[1], "fetch_command": row[2]["fetch_command"]} for row in omitted[:limit]],
+        "omitted_records_truncated": len(omitted) > limit,
+        "inventory_command": ["archctl", "memory", "list"]}
+    if omitted:
+        gaps.append({"category": "retrieval", "affects": ["memories"],
+            "message": f"Reason retrieval returned {len(memory_items)} of {len(ranked)} matching or related records; "
+                       "omitted reasons can include conflicts or replacements. Fetch by ID or list the complete memory inventory"})
     for item in memory_items:
         item["excerpt_truncated"] = len(item["rationale"]) > 2000
         item["rationale"] = item["rationale"][:2000]
@@ -202,9 +225,14 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
         if item["freshness"]["status"] == "stale":
             concerns.append({"kind": "stale_reasoning", "references": [item["id"]],
                              "message": "Implementation inputs changed; reassess applicability before using this rationale"})
-        if item["contradicts"]:
-            concerns.append({"kind": "conflicting_reasoning", "references": [item["id"], *item["contradicts"]],
+        conflicts = sorted(set(item["contradicts"]) | set(item["contradicted_by"]))
+        if conflicts:
+            concerns.append({"kind": "conflicting_reasoning", "references": [item["id"], *conflicts],
                              "message": "Preserve both accounts and resolve their assumptions in the current task"})
+        unavailable = [r["reference"] for r in item["reference_checks"] if r["status"] == "unavailable"]
+        if unavailable:
+            concerns.append({"kind": "unavailable_reference", "references": [item["id"], *unavailable],
+                             "message": "Original local support is unavailable; the historical reason remains attributable, not freshly verified"})
     decision_successors: dict[str, list[str]] = {}
     for decision in (snapshot.model.decisions if snapshot else decision_notes or []):
         if isinstance(decision, dict):
@@ -246,6 +274,9 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
                     "message": f"Observed dependency contradicts {policy.id}",
                     "evidence_refs": sorted({r for e in violations for r in e["evidence_refs"]}),
                     "freshness": "stale" if stale_evidence else "current"})
+    for decision in decisions:
+        decision["applicability"] = {"status": "not_assessed",
+            "meaning": "Authored lifecycle status is historical context; current applicability and governance adoption are not established by retrieval"}
     if len(decisions) > limit:
         gaps.append({"category": "scope", "affects": ["decisions"],
                      "message": f"Decision retrieval returned {limit} of {len(decisions)} matching decisions; raise --limit or inspect the full decision inventory"})
@@ -270,12 +301,15 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
     packet = {"schema_version": version("context"), "status": "assembled", "task": task,
         "planned_paths": paths, "context_references": context_refs or [],
         "components": binding_items[:limit], "potential_impact": [affected[k] for k in sorted(affected)][:limit],
-        "memories": memory_items, "decisions": decisions[:limit], "source_candidates": snippets,
+        "memories": memory_items, "memory_retrieval": memory_retrieval,
+        "decisions": decisions[:limit], "source_candidates": snippets,
         "observed_edges": relevant_edges[:limit], "evidence": [e for e in evidence if e["id"] in refs],
         "proposed_dependencies": hypothetical, "verification_suggestions": checks[:limit],
         "concerns": concerns, "limitations": gaps, "executions": [],
         "source": {"model_revision": snapshot.revision if snapshot else None,
                    "evidence_revision": observations.source_revision if observations else None,
+                   "evidence_producer": {"name": observations.producer, "version": observations.producer_version} if observations else None,
+                   "evidence_source_digest": observations.source_digest if observations else None,
                    "evidence_freshness": "stale" if stale_evidence else "current" if observations else "unavailable"},
         "retrieval": retrieval,
         "totals": {"components": len(binding_items), "potential_impact": len(affected), "memories": len(ranked),
@@ -283,7 +317,8 @@ def build_context(root: Path, task: str, paths: list[str], bindings: list[Bindin
                    "verification_suggestions": len(checks), "executions": 0},
         "decision_prompts": ["Which existing capability fits this task's lifecycle, state, and failure assumptions?",
             "Read the source and usage examples before choosing direct reuse, extraction, or local implementation.",
-            "Check relevant behavior and resource limits; record reasons that would be costly to forget."],
+            "Check relevant behavior and resource limits; record reasons that would be costly to forget.",
+            "Continue investigating while an unresolved question could materially change the design or verification; otherwise implement and test."],
         "meaning": "Advisory context for agent judgment; assembled is not an architectural or behavioral pass"}
     packet["revision"] = digest(packet)
     return packet
@@ -295,13 +330,30 @@ def markdown(packet: dict) -> str:
     lines += [f"- `{c['id']}` ({c['basis']}); no edit implied" for c in packet["potential_impact"]]
     lines += ["", "## Reasons and assumptions", ""]
     for m in packet["memories"]:
-        lines += [f"### {m['id']} ({m['origin']}, {m['freshness']['status']})", "", m["statement"], "", m["rationale"], "",
+        lines += [f"### {m['id']} ({m['origin']}; source pins {m['freshness']['status']})", "", m["statement"], "", m["rationale"], "",
                   "References: " + ", ".join(m["references"]), ""]
+        if m.get("applicability"):
+            lines += ["Applicability: " + m["applicability"]["status"] + ". " + m["applicability"]["meaning"], ""]
+        for label, key in (("Assumptions", "assumptions"), ("Paths", "paths"), ("Components", "components"),
+                           ("Supersedes", "supersedes"), ("Contradicts", "contradicts"), ("Contradicted by", "contradicted_by")):
+            if m.get(key):
+                lines += [label + ": " + "; ".join(m[key]), ""]
+        for reference in m.get("reference_checks", []):
+            lines += [f"- {reference['reference']}: {reference['status']}. {reference['meaning']}"]
+        if m.get("fetch_command"):
+            lines += ["", "Full record: `" + " ".join(m["fetch_command"]) + "`", ""]
         successors = m.get("superseded_by_ids") or ([m["superseded_by"]] if m.get("superseded_by") else [])
         if successors:
             lines += ["Superseded by: " + ", ".join(successors), ""]
+    retrieval = packet.get("memory_retrieval")
+    if retrieval and retrieval["omitted"]:
+        lines += [f"Omitted reasons: {retrieval['omitted']}; conflicts and replacements may be omitted.", ""]
+        lines += [f"- `{item['id']}`: `{' '.join(item['fetch_command'])}`" for item in retrieval["omitted_records"]]
+        lines += ["", "Complete inventory: `" + " ".join(retrieval["inventory_command"]) + "`", ""]
     for d in packet["decisions"]:
         lines += [f"### {d['id']} ({d['status']})", "", d["rationale_excerpt"], "", f"Source: `{d['path']}`", ""]
+        if d.get("applicability"):
+            lines += ["Applicability: " + d["applicability"]["status"] + ". " + d["applicability"]["meaning"], ""]
         if d.get("supersedes"):
             lines += ["Supersedes: " + ", ".join(d["supersedes"]), ""]
         if d.get("superseded_by"):

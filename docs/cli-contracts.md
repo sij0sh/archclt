@@ -9,6 +9,10 @@
 formats. They require no baseline or approved model. Context exit 0 means
 `assembled`, including useful packets with partial evidence. `memory record`
 appends an immutable reason with provenance and returns `recorded`.
+Context reason projections add applicability, reference-presence checks,
+reverse conflict links and full-record fetch commands. `memory_retrieval` makes
+bounded omissions discoverable; see [the context guide](context.md). These are
+additive v2 output fields, not fields accepted by `memory record`.
 
 `verify run` uses an explicit JSON argument vector or existing model check ID.
 `verify import` retains a supplied harness record. Actual execution outcome and
@@ -98,7 +102,13 @@ for source overlays, provenance, supported inputs and retained failure artifacts
 
 `--evidence` defaults to `.archctl/evidence.json`. The command is read-only except for `--out`.
 
-`status` answers one question: **are the local inputs coherent enough to run impact analysis and Guard?** It does not run Guard, execute commands, compare a baseline, or approve intent.
+`status` preserves its existing readiness and exit-code contract for optional
+governed inputs. `status_scope: governed_inputs` identifies that scope explicitly.
+Its `capabilities` object separately states that `context`, `memory` and
+`verify_command` need neither model nor baseline; data errors still apply.
+`governed_gate.adoption: not_assessed` avoids inferring adoption from discovered
+files. The report does not run Guard, execute commands, compare a baseline, or
+approve intent. Core operations do not require a successful `status` call.
 
 | `status` | Meaning |
 |---|---|
@@ -123,6 +133,14 @@ Shape:
   "operation": "status",
   "root": "/absolute/repository/root",
   "status": "ready",
+  "status_scope": "governed_inputs",
+  "meaning": "Legacy readiness describes optional governed inputs; it is not permission, adoption or task acceptance",
+  "capabilities": {
+    "context": {"requires_model": false, "requires_baseline": false},
+    "memory": {"requires_model": false, "requires_baseline": false},
+    "verify_command": {"requires_model": false, "requires_baseline": false},
+    "governed_gate": {"requires_model": true, "requires_baseline": true, "adoption": "not_assessed"}
+  },
   "tool": {"name": "archctl", "version": "0.4.0"},
   "model": {
     "state": "valid",

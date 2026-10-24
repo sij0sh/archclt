@@ -1,0 +1,54 @@
+{
+  "id": "context-reasons-stay-challengeable",
+  "statement": "Keep context independent of gate authority and expose linked disagreement even when full reason delivery is bounded.",
+  "rationale": "The context-first source already supported no-model investigation, immutable reasons and direct verification. Remaining friction came from transitive gate imports, bounded retrieval hiding reverse conflicts, source hashes resembling semantic validation, and status directing ordinary tasks toward governance. Share Git scope in Integrations, load governance only for explicit routes, traverse explicit reason relations in both directions, expose omissions and real fetch commands, and keep applicability unassessed. Preserve canonical v2 records and strict/selective gate behavior; additive diagnostics fit ADR-006. Native provider composition remains conditional on demonstrated consumer need.",
+  "origin": "agent_chosen",
+  "references": [
+    "artifact:docs/context-pivot.md",
+    "artifact:tests/test_context_pivot.py",
+    "architecture/decisions/ADR-005.md",
+    "architecture/decisions/ADR-006.md"
+  ],
+  "components": [
+    "core",
+    "atlas",
+    "cli",
+    "integrations"
+  ],
+  "paths": [
+    "src/archctl/core/memory.py",
+    "src/archctl/core/context.py",
+    "src/archctl/atlas/context.py",
+    "src/archctl/cli.py",
+    "src/archctl/cli_context.py",
+    "src/archctl/cli_gate.py",
+    "src/archctl/integrations/git.py",
+    "tests/test_context_pivot.py"
+  ],
+  "topics": [
+    "context",
+    "rationale",
+    "retrieval",
+    "governance",
+    "compatibility"
+  ],
+  "assumptions": [
+    "Explicit contradiction and supersession links are available; semantic disagreement still requires agent judgment.",
+    "Existing v2 consumers ignore additive output fields.",
+    "A passing verification result and matching input hashes do not establish requirement adequacy."
+  ],
+  "supersedes": [],
+  "contradicts": [],
+  "source_files": {
+    "src/archctl/atlas/context.py": "14ab18711458a1a404ac6f27f298b7330b721b090b67383110bb03bd519fe734",
+    "src/archctl/cli.py": "4f7468f3a8dc3c0c1b74a2fd60c5bf81f06d96f0f50bf6c3e7cb6667f6c287c9",
+    "src/archctl/cli_context.py": "bcbdfe841aa916fa6ae5949f208eb43051dc1cf03697806a5421619672acf88e",
+    "src/archctl/cli_gate.py": "2ffc97af6c34a41bdd3282024186c854d802b0c476869abc8b57f9e94b6c1386",
+    "src/archctl/core/context.py": "e5e288192e022032a2434041731b56387136f72bc5a100597434bdbdc2d4908b",
+    "src/archctl/core/memory.py": "07fc5ce2176f969db4e79412a0ac98a12bc028fc180f575c69c138ee8881cd06",
+    "src/archctl/integrations/git.py": "e1772acfa5f050bf59f661bf784187bf356783af555d2d0a356c178a2f6cbe03",
+    "tests/test_context_pivot.py": "a4d24e9a29cff5d236615514c84de492271ab7dbf64d19f5e94b0cf235a55376"
+  },
+  "schema_version": "archctl.memory.v2",
+  "revision": "be797cc27d536929d357ffe12d1d775136a49710e528c383982a5320e6347ed4"
+}

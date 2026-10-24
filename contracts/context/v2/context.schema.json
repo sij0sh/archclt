@@ -111,6 +111,23 @@
       "items": {
         "additionalProperties": false,
         "properties": {
+          "applicability": {
+            "additionalProperties": false,
+            "properties": {
+              "meaning": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "status": {
+                "const": "not_assessed"
+              }
+            },
+            "required": [
+              "meaning",
+              "status"
+            ],
+            "type": "object"
+          },
           "excerpt_truncated": {
             "type": "boolean"
           },
@@ -448,6 +465,23 @@
       "items": {
         "additionalProperties": false,
         "properties": {
+          "applicability": {
+            "additionalProperties": false,
+            "properties": {
+              "meaning": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "status": {
+                "const": "not_assessed"
+              }
+            },
+            "required": [
+              "meaning",
+              "status"
+            ],
+            "type": "object"
+          },
           "assumptions": {
             "items": {
               "minLength": 1,
@@ -457,6 +491,14 @@
             "uniqueItems": true
           },
           "components": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "contradicted_by": {
             "items": {
               "minLength": 1,
               "type": "string"
@@ -474,6 +516,13 @@
           },
           "excerpt_truncated": {
             "type": "boolean"
+          },
+          "fetch_command": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
           },
           "freshness": {
             "additionalProperties": false,
@@ -533,6 +582,39 @@
             "maxLength": 12000,
             "minLength": 1,
             "type": "string"
+          },
+          "record_path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reference_checks": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "meaning": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "reference": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "available",
+                    "unavailable",
+                    "not_checked"
+                  ]
+                }
+              },
+              "required": [
+                "meaning",
+                "reference",
+                "status"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           },
           "references": {
             "items": {
@@ -629,6 +711,71 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "memory_retrieval": {
+      "additionalProperties": false,
+      "properties": {
+        "inventory_command": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "matched": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "omitted": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "omitted_records": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "fetch_command": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "id": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "fetch_command",
+              "id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "omitted_records_truncated": {
+          "type": "boolean"
+        },
+        "related": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "returned": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "inventory_command",
+        "matched",
+        "omitted",
+        "omitted_records",
+        "omitted_records_truncated",
+        "related",
+        "returned"
+      ],
+      "type": "object"
     },
     "observed_edges": {
       "items": {
@@ -930,10 +1077,52 @@
             "unavailable"
           ]
         },
+        "evidence_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_producer": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "version": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "version"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "evidence_revision": {
           "type": [
             "string",
             "null"
+          ]
+        },
+        "evidence_source_digest": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "model_revision": {

@@ -11,7 +11,7 @@ from archctl.core.contracts import version
 from archctl.core.context import decision_notes, inventory, load_bindings, terms
 from archctl.core.io import (InputError, contained, digest, load_document, relative_path,
                              string, write_json, write_text)
-from archctl.core.memory import freshness, read_memories, remember
+from archctl.core.memory import memory_view, read_memories, remember
 from archctl.core.models import Component, Domain, Model, Snapshot
 from archctl.integrations.briefcase.adapter import check_freshness, parse_evidence
 from archctl.integrations.briefcase.native import export_evidence
@@ -63,7 +63,7 @@ def _optional_model(root: Path, directory: str) -> tuple[Snapshot | None, list[s
     try:
         if has_authoring_model(contained(root, directory)):
             return compile_model(root, directory), []
-    except InputError as exc:
+    except (InputError, OSError, UnicodeError, ValueError) as exc:
         return None, [f"Optional architecture model is invalid; context uses provisional bindings: {exc}"]
     return None, []
 
@@ -107,7 +107,7 @@ def context(root: Path, args, *, paths: list[str]) -> dict:
     elif evidence_path.is_file():
         try:
             observations = parse_evidence(load_document(evidence_path), mapping)
-        except InputError as exc:
+        except (InputError, OSError, UnicodeError, ValueError) as exc:
             if args.evidence:
                 raise
             gaps.append(f"Optional default evidence is invalid: {exc}")
@@ -122,6 +122,9 @@ def context(root: Path, args, *, paths: list[str]) -> dict:
         observations=observations, evidence_gaps=gaps, stale_evidence=stale,
         dependencies=args.dependency, context_refs=args.reference,
         decision_notes=notes, limit=args.limit)
+    packet["source"]["evidence_path"] = (
+        evidence_path.relative_to(root).as_posix() if evidence_path.is_relative_to(root) else str(evidence_path)
+    ) if observations and not args.refresh_evidence else None
     # Results are selected by task or overlapping source scope, never treated as approval.
     results = []
     for record in read_executions(root):
@@ -169,8 +172,9 @@ def dispatch(root: Path, args, paths: list[str] | None = None) -> int:
                 if not records:
                     raise InputError(f"Unknown memory: {args.id}")
             query = terms(getattr(args, "query", ""))
-            result = [{**r.to_dict(), "freshness": freshness(root, r)} for r in records if not query or
-                      query & terms(r.statement + " " + r.rationale + " " + " ".join(r.topics))]
+            result = [memory_view(root, r) for r in records if not query or
+                      query & terms(" ".join((r.id, r.statement, r.rationale, *r.topics,
+                                              *r.assumptions, *r.components, *r.paths)))]
             print(json.dumps({"schema_version": version("memories"), "records": result}, indent=2))
         return 0
     if args.operation == "run":

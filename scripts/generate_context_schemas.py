@@ -29,9 +29,14 @@ def make_schemas() -> dict:
     memory = contract("memory", memory_props,
         optional=("components", "paths", "topics", "assumptions", "supersedes", "contradicts", "source_files", "revision"))
     memory_freshness = obj({"status": enum("current", "stale", "unverified"), "changed_paths": texts, "new_paths": texts})
+    memory_projection = {"applicability": obj({"status": {"const": "not_assessed"}, "meaning": text}),
+        "reference_checks": array(obj({"reference": text, "status": enum("available", "unavailable", "not_checked"),
+                                       "meaning": text})),
+        "record_path": text, "fetch_command": array(text), "contradicted_by": texts}
     summary = contract("memory", {**memory_props, "score": number, "freshness": memory_freshness,
         "superseded_by": {"type": ["string", "null"]}, "superseded_by_ids": texts,
-        "relevance": enum("lexical_and_scope", "related_record"), "excerpt_truncated": boolean})
+        "relevance": enum("lexical_and_scope", "related_record"), "excerpt_truncated": boolean,
+        **memory_projection}, optional=tuple(memory_projection))
     result = obj({"status": enum("passed", "failed", "unknown", "not_executed"), "message": blank,
         "returncode": {"type": ["integer", "null"]}, "duration_seconds": number,
         "stdout": blank, "stderr": blank, "output_truncated": boolean})
@@ -55,9 +60,14 @@ def make_schemas() -> dict:
         "context_references": array(text), "components": array(obj({"id": text, "paths": texts, "aliases": texts,
             "purpose": blank, "origin": enum("provisional", "declared", "override")})),
         "potential_impact": array(obj({"id": text, "basis": text, "path": array(edge), "edit_required": {"const": False}})),
-        "memories": array(summary), "decisions": array(obj({"id": text, "status": text, "path": text,
+        "memories": array(summary),
+        "memory_retrieval": obj({"matched": number, "related": number, "returned": number, "omitted": number,
+            "omitted_records": array(obj({"id": text, "fetch_command": array(text)})),
+            "omitted_records_truncated": boolean, "inventory_command": array(text)}),
+        "decisions": array(obj({"id": text, "status": text, "path": text,
             "rationale_excerpt": text, "excerpt_truncated": boolean, "origin": {"const": "declared"}, "score": number,
-            "supersedes": texts, "superseded_by": texts})),
+            "supersedes": texts, "superseded_by": texts,
+            "applicability": memory_projection["applicability"]}, optional=("applicability",))),
         "source_candidates": array(obj({"path": text, "start_line": {"type": "integer", "minimum": 1},
             "excerpt": blank, "origin": {"const": "source"}, "sha256": sha, "score": number,
             "components": texts, "file_excerpt_truncated": boolean, "meaning": text})),
@@ -72,12 +82,15 @@ def make_schemas() -> dict:
         "concerns": array(concern), "limitations": array(obj({"category": text, "affects": texts, "message": text})),
         "executions": array(execution_view),
         "source": obj({"model_revision": {"anyOf": [sha, {"type": "null"}]},
-            "evidence_revision": {"type": ["string", "null"]}, "evidence_freshness": enum("current", "stale", "unavailable")}),
+            "evidence_revision": {"type": ["string", "null"]}, "evidence_freshness": enum("current", "stale", "unavailable"),
+            "evidence_producer": {"anyOf": [obj({"name": text, "version": text}), {"type": "null"}]},
+            "evidence_source_digest": {"anyOf": [sha, {"type": "null"}]}, "evidence_path": {"type": ["string", "null"]}},
+            optional=("evidence_producer", "evidence_source_digest", "evidence_path")),
         "retrieval": obj({"files_considered": number, "files_read": number, "search_truncated": boolean,
             "matches": number, "returned": number, "retrieval": text}),
         "totals": obj({name: number for name in ("components", "potential_impact", "memories", "decisions",
             "observed_edges", "verification_suggestions", "executions")}),
-        "decision_prompts": array(text), "meaning": text, "revision": sha})
+        "decision_prompts": array(text), "meaning": text, "revision": sha}, optional=("memory_retrieval",))
     config = contract("context-config", {"components": array(obj({"id": text,
         "paths": {**texts, "minItems": 1}, "aliases": texts, "purpose": text}, optional=("aliases", "purpose")))})
     schemas = {"memory": memory, "context": context, "execution": execution, "context-config": config}

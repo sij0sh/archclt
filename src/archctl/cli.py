@@ -11,22 +11,14 @@ from pathlib import Path
 import sys
 
 from archctl import __version__
-from archctl.atlas.impact import build_impact
-from archctl.atlas.reconcile import reconcile
-from archctl.atlas.report import markdown
 from archctl.core.contracts import version
 from archctl.core.compiler import compile_model, has_authoring_model, read_snapshot
 from archctl.core.io import InputError, contained, matches, write_json, write_text
 from archctl.core.models import ACTIVE_DECISIONS, Snapshot
-from archctl.core.change import read_change
-from archctl.cli_gate import EXIT, changed_paths, run_gate
 from archctl.cli_context import add_commands as context_commands, dispatch as context_dispatch
-from archctl.guard.evaluate import check
 from archctl.integrations.briefcase.adapter import check_freshness, parse_evidence, read_evidence
 from archctl.integrations.briefcase.native import PRODUCER, SUPPORT, export_evidence
-from archctl.integrations.briefcase.preparation import prepare_evidence
-from archctl.observatory.workflows import run_workflow
-from archctl.templates import initialize
+from archctl.integrations.git import changed_paths
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -35,7 +27,9 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 def parser() -> argparse.ArgumentParser:
-    cli = ArgumentParser(prog="archctl", description="Architectural context, memory and verification for coding agents")
+    cli = ArgumentParser(prog="archctl", description="Architectural context, memory and verification for coding agents",
+        epilog="Start with context TASK, memory, or verify -- no adoption is required. "
+               "Model, change, impact, guard, gate and observe retain their explicit governed contracts.")
     cli.add_argument("--version", action="version", version=__version__)
     cli.add_argument("--root", type=Path, default=Path("."), help="Application repository root (global option)")
     cli.add_argument("--model-dir", default="architecture",
@@ -58,7 +52,7 @@ def parser() -> argparse.ArgumentParser:
     change_ops = change.add_subparsers(dest="operation", required=True)
     change_validate = change_ops.add_parser("validate")
     change_validate.add_argument("--input", required=True, type=Path)
-    status = commands.add_parser("status", help="Report model, evidence and readiness without approving intent")
+    status = commands.add_parser("status", help="Report core capabilities and optional governed-input readiness")
     status.add_argument("--format", choices=["json", "text"], default="json")
     status.add_argument("--evidence", type=Path, help="Normalized evidence; defaults to .archctl/evidence.json")
     status.add_argument("--drift", action="store_true", help="Include repository-wide reconciliation; unresolved findings need attention")
@@ -300,6 +294,7 @@ def _status(root: Path, model_dir: str, evidence_arg: Path | None, *, drift: boo
             if state == "stale":
                 actions.append("Regenerate evidence after the source changes")
             if drift:
+                from archctl.atlas.reconcile import reconcile
                 reconciliation = reconcile(snapshot, observations, freshness)
                 unresolved = [f for f in reconciliation["findings"] if f["status"] != "passed"]
                 entries, count, truncated = _bounded(reconciliation["findings"])
@@ -321,10 +316,18 @@ def _status(root: Path, model_dir: str, evidence_arg: Path | None, *, drift: boo
         status = "ready"
     else:
         status = "needs_attention"
-    actions.append("Run gate with the reviewed baseline and a change contract for a task verdict")
+    actions = ["Use archctl context TASK for ordinary investigation; memory and verify need no model or baseline",
+               *("For governed inputs only: " + action for action in actions)]
     actions = list(dict.fromkeys(actions))
     return {"schema_version": version("status"), "operation": "status", "root": str(root),
-            "status": status, "tool": {"name": "archctl", "version": __version__},
+            "status": status, "status_scope": "governed_inputs",
+            "meaning": "Legacy readiness describes optional governed inputs; it is not permission, adoption or task acceptance",
+            "capabilities": {"context": {"requires_model": False, "requires_baseline": False},
+                "memory": {"requires_model": False, "requires_baseline": False},
+                "verify_command": {"requires_model": False, "requires_baseline": False},
+                "governed_gate": {"requires_model": True, "requires_baseline": True,
+                                  "adoption": "not_assessed"}},
+            "tool": {"name": "archctl", "version": __version__},
             "model": model, "evidence": evidence,
             "gate": {"status": "not_executed",
                      "reason": "status does not run Guard or execute verification commands"},
@@ -344,7 +347,8 @@ def _status_text(report: dict) -> str:
     evidence_line = f"Evidence: {evidence['state']} ({evidence['path']})"
     if evidence["message"]:
         evidence_line += f" - {evidence['message']}"
-    lines = [f"Status: {report['status']}", model_line, evidence_line]
+    lines = [f"Status: {report['status']} (scope: {report['status_scope']})", report["meaning"],
+             "Core: context, memory and verify --command require no model or baseline", model_line, evidence_line]
     if evidence.get("support"):
         lines.append("Support: " + evidence["support"]["limitation"])
     if "drift" in report:
@@ -366,12 +370,14 @@ def dispatch(args: argparse.Namespace) -> int:
                  else getattr(args, "paths", []))
         return context_dispatch(root, args, paths)
     if args.command == "gate":
+        from archctl.cli_gate import run_gate
         code, result = run_gate(root, args)
         print(json.dumps(result, indent=2))
         return code
     args._protected_paths = {_path(root, getattr(args, name)) for name in ("input", "evidence", "baseline")
                              if isinstance(getattr(args, name, None), Path)}
     if args.command == "init":
+        from archctl.templates import initialize
         if args.model_dir != "architecture":
             raise InputError("init currently uses architecture/; rename it afterwards to use --model-dir")
         _emit(args, {"created": initialize(root),
@@ -392,6 +398,7 @@ def dispatch(args: argparse.Namespace) -> int:
     args._protected_paths.update(contained(root, rel) for rel, _ in snapshot.sources)
     args._component_paths = tuple(p for c in snapshot.model.components for p in c.paths)
     if args.command == "change":
+        from archctl.core.change import read_change
         change = read_change(_path(root, args.input), snapshot)
         unknowns = [f"Acceptance criterion has no verification: {a.id}" for a in change.acceptance if not a.checks]
         unknowns += [f"Open question: {q}" for q in change.open_questions]
@@ -420,6 +427,7 @@ def dispatch(args: argparse.Namespace) -> int:
         return 0
     if args.command == "briefcase":
         if args.operation == "prepare-evidence":
+            from archctl.integrations.briefcase.preparation import prepare_evidence
             result = prepare_evidence(root, snapshot, archctl=args.archctl, briefcase=args.briefcase,
                                       destination=_path(root, args.out_dir), source_roots=tuple(args.source_root),
                                       model_dir=args.model_dir)
@@ -448,10 +456,14 @@ def dispatch(args: argparse.Namespace) -> int:
     freshness_fn = lambda: check_freshness(root, snapshot, observations)
     freshness = freshness_fn()
     if args.command in {"reconcile", "report"}:
+        from archctl.atlas.reconcile import reconcile
+        from archctl.atlas.report import markdown
         result = reconcile(snapshot, observations, freshness)
         _emit(args, markdown(snapshot, result) if args.format == "markdown" else result, root)
         return 0  # Views report drift; Guard owns the blocking decision.
     if args.command == "observe":
+        from archctl.cli_gate import EXIT
+        from archctl.observatory.workflows import run_workflow
         baseline = read_snapshot(_path(root, args.baseline))
         report = run_workflow(root, snapshot, baseline, observations, args.workflow,
                               environment=args.environment, freshness=freshness_fn)
@@ -461,6 +473,7 @@ def dispatch(args: argparse.Namespace) -> int:
     # With no explicit scope, Guard checks the entire model. Impact without
     # concrete planned paths stays incomplete, rather than inventing scope.
     all_components = args.all or (args.command == "guard" and not args.paths and not args.changed)
+    from archctl.atlas.impact import build_impact
     impact = build_impact(snapshot, observations, paths,
                           args.task if args.command == "impact" else "Verify candidate change",
                           freshness, all_components=all_components)
@@ -468,6 +481,8 @@ def dispatch(args: argparse.Namespace) -> int:
         _emit(args, impact, root)
         return 2 if impact["assessment"] == "partial" else 0
     baseline = read_snapshot(_path(root, args.baseline))
+    from archctl.cli_gate import EXIT
+    from archctl.guard.evaluate import check
     report = check(root, snapshot, baseline, observations, impact, execute=args.run,
                    environment=args.environment, freshness=freshness_fn)
     _emit(args, report, root)

@@ -19,6 +19,13 @@ trace collection, hosted approval and graph UI remain outside the implementation
 The coding agent supplies semantic interpretation and original conversation
 references. Retrieval does not access unprovided chat history. Source freshness,
 unknowns, missing observations and unexecuted checks remain explicit.
+`status` retains legacy governed-input readiness and exit codes while reporting
+independent core prerequisites and explicitly declining to infer adoption. Start
+ordinary tasks with `context`; no readiness or acceptance step is required.
+Reason retrieval exposes bounded omissions and fetch commands, checks local
+reference presence separately from provider verification, and leaves semantic
+applicability to the coding agent even when source hashes match. See
+[migration and boundary notes](context-pivot.md).
 
 The npm launcher and hosted release workflows are part of the release source.
 `npm test` covers the launcher; hosted workflows run in GitHub Actions. Read

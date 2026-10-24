@@ -107,10 +107,14 @@ def decision_notes(root: Path, directory: str) -> tuple[list[dict], list[str]]:
     for path in sorted(contained(root, f"{directory}/decisions").glob("*.md")):
         rel = path.relative_to(root).as_posix()
         path = contained(root, rel)
-        if path.stat().st_size > 65536:
-            gaps.append(f"Decision record exceeds 65536 bytes and was skipped: {rel}")
+        try:
+            if path.stat().st_size > 65536:
+                gaps.append(f"Decision record exceeds 65536 bytes and was skipped: {rel}")
+                continue
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            gaps.append(f"Decision record could not be read and was skipped: {rel}: {exc}")
             continue
-        text = path.read_text(encoding="utf-8")
         try:
             front, body = parse_decision(text, rel)
         except InputError:

@@ -109,6 +109,30 @@ def freshness(root: Path, record: Memory) -> dict:
             "changed_paths": sorted(changed), "new_paths": new}
 
 
+def memory_view(root: Path, record: Memory) -> dict:
+    """Project a reason without changing its canonical bytes or claiming it applies."""
+    references = []
+    for reference in record.references:
+        local = reference.removeprefix("artifact:") if reference.startswith("artifact:") else (
+            reference if ":" not in reference and "/" in reference else None)
+        if local is None:
+            references.append({"reference": reference, "status": "not_checked",
+                "meaning": "Opaque provenance; resolve with its original provider, not an inferred fetch API"})
+            continue
+        try:
+            path = contained(root, local.split("#", 1)[0])
+            available = path.is_file()
+        except (InputError, OSError):
+            available = False
+        references.append({"reference": reference, "status": "available" if available else "unavailable",
+            "meaning": "Local file presence only; original evidence bytes and semantic applicability are not verified"})
+    return {**record.to_dict(), "freshness": freshness(root, record),
+        "applicability": {"status": "not_assessed",
+            "meaning": "Source hashes describe input changes; neither matching nor changed hashes decide whether this reason applies"},
+        "reference_checks": references, "record_path": f"architecture/memory/{record.id}.json",
+        "fetch_command": ["archctl", "memory", "show", record.id]}
+
+
 def remember(root: Path, value: object, directory: str = "architecture/memory") -> Memory:
     """Append once, retaining original evidence pins and all historical records."""
     record = parse_memory(value)

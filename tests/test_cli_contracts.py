@@ -177,7 +177,7 @@ class CliContractTests(ProjectTest):
         output = self.root / ".archctl/prepared/new"
         acknowledgement = {"schema_version": "archctl.output.v2", "status": "written",
                            "output": str(output / "evidence.json"), "manifest": str(output / "manifest.json")}
-        with patch("archctl.cli.prepare_evidence", return_value=acknowledgement) as prepare:
+        with patch("archctl.integrations.briefcase.preparation.prepare_evidence", return_value=acknowledgement) as prepare:
             stdout = io.StringIO()
             with redirect_stdout(stdout):
                 code = main(["--root", str(self.root), "briefcase", "prepare-evidence",
@@ -202,7 +202,7 @@ class CliContractTests(ProjectTest):
         environment = {"ARCHCTL_BIN": "/configured/archctl", "BRIEFCASE_BIN": "/configured/briefcase", "PATH": "/no-tools"}
         base = ["--root", str(self.root)]
         with patch.dict(os.environ, environment), redirect_stdout(io.StringIO()):
-            with patch("archctl.cli.prepare_evidence", return_value={}) as prepare:
+            with patch("archctl.integrations.briefcase.preparation.prepare_evidence", return_value={}) as prepare:
                 args = [*base, "briefcase", "prepare-evidence", "--source-root", ".", "--out-dir", ".archctl/new"]
                 self.assertEqual(main(args), 0)
                 self.assertEqual(prepare.call_args.kwargs["archctl"], Path("/configured/archctl"))
@@ -216,7 +216,7 @@ class CliContractTests(ProjectTest):
                 self.assertEqual(export.call_args.kwargs["binary"], "/configured/briefcase")
                 self.assertEqual(main([*args, "--briefcase", "/flag/briefcase"]), 0)
                 self.assertEqual(export.call_args.kwargs["binary"], "/flag/briefcase")
-            with patch("archctl.cli.run_gate", return_value=(0, {})) as gate:
+            with patch("archctl.cli_gate.run_gate", return_value=(0, {})) as gate:
                 args = [*base, "gate", "--baseline-ref", "a" * 40]
                 self.assertEqual(main(args), 0)
                 self.assertEqual(gate.call_args.args[1].briefcase, "/configured/briefcase")

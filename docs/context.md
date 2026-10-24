@@ -30,6 +30,13 @@ dependency analyzer or an embedded LLM. Task words, explicit paths, component
 scope and graph relations determine retrieval. The coding agent supplies semantic
 interpretation and can issue a narrower query or follow returned references.
 Default section limit is 8; `--limit` accepts 1–50. Totals report omitted matches.
+Reason retrieval follows explicit contradiction and supersession links in both
+directions, including related branches. `memory_retrieval` reports direct matches,
+related records, returned/omitted counts and a bounded list of omitted IDs with
+`memory show` argument vectors. If that list is also truncated, `memory list`
+retrieves the complete inventory. A small packet is not evidence of agreement.
+Each delivered reason carries its full-record path and fetch command; excerpts
+are disposable projections, not canonical records to re-import.
 Source search considers at most 400 files and the first 32 KiB of each, returning
 small excerpts. Inventory is limited to 4000 files; truncation stays visible.
 
@@ -48,6 +55,11 @@ This reuses the existing Python import mapper and Briefcase public operations.
 It does not expand mapping to other languages, runtime traces or session APIs.
 A failed refresh is reported as a limitation and never falls back to an older
 bundle. Native interoperability must be tested against a real compatible binary.
+The packet preserves the normalized producer name/version, retained source
+revision and source-pin digest. `source.evidence_path` locates a supplied bundle;
+it is null for an in-memory refresh or absent evidence. Evidence locations retain
+their original provider strings. The packet does not invent a project identity
+or a provider fetch API absent from the normalized input.
 
 Pass `--reference conversation:...` or `--reference case:...` for original context
 retrieved by the agent. References are opaque provenance, not automatically
@@ -125,6 +137,15 @@ Records are immutable. Identical retries keep original pins. Use a new ID and
 unresolved conflict. A record may have multiple successors; all are reported in
 `superseded_by_ids`. Referenced records must exist and remain readable.
 Freshness describes changed implementation inputs, not the truth of user intent.
+Every reason projection reports `applicability.status: not_assessed`, even with
+matching source hashes. Changed hashes also leave the reason available for
+reassessment. ADR lifecycle status is authored context and does not establish
+current applicability or governance adoption.
+`reference_checks` reports local artifact presence as `available`/`unavailable`
+and opaque provider references as `not_checked`. Presence verifies neither the
+original bytes nor the claim. No remote reference is silently fetched. Markdown
+includes assumptions, scope, forward/reverse conflict links and full-record fetch
+instructions as well as rationale.
 Repeated inferences never become user statements. Semantic contradiction analysis
 belongs to the agent; the tool tracks explicit links and changed inputs.
 
@@ -133,6 +154,10 @@ run `PYTHONPATH=src python3 scripts/migrate_memory_v2.py architecture/memory`
 from the 0.4.0 source archive. The script changes only `schema_version` and the
 content revision; it verifies the old revision first. The installed runtime rejects
 v1 records instead of rewriting them.
+
+The retrieval additions remain within the additive v2 output policy. Native
+memory, execution and governed input schemas are unchanged. See the
+[migration and boundary notes](context-pivot.md) for compatibility details.
 
 ## Execute or import checks
 

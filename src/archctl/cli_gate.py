@@ -26,6 +26,7 @@ from archctl.core.io import InputError, contained, digest, file_digest, load_doc
 from archctl.guard.evaluate import check
 from archctl.integrations.briefcase.adapter import check_freshness, read_evidence
 from archctl.integrations.briefcase.native import PRODUCER, SUPPORT, export_evidence
+from archctl.integrations.git import changed_paths, git as _git
 
 
 EXIT = {"passed": 0, "failed": 1, "unknown": 2, "not_executed": 2, "error": 3}
@@ -34,23 +35,6 @@ sys.path.insert(0, sys.argv[1])
 from archctl.cli_gate import worker
 sys.exit(worker(sys.argv[2]))
 """
-
-
-def _git(root: Path, *arguments: str, binary: bool = False):
-    result = subprocess.run(["git", "-C", str(root), *arguments], capture_output=True, check=False)
-    if result.returncode:
-        raise InputError(f"Git {' '.join(arguments[:2])} failed: {result.stderr.decode(errors='replace').strip()}")
-    return result.stdout if binary else result.stdout.decode("utf-8", errors="strict").strip()
-
-
-def changed_paths(root: Path, base: str) -> list[str]:
-    if not base or base.startswith("-"):
-        raise InputError("--base-ref must name a Git revision")
-    raw = _git(root, "diff", "--relative", "--name-only", "--no-renames", "-z", base, "--", ".", binary=True)
-    raw += _git(root, "ls-files", "--others", "--exclude-standard", "-z", "--", ".", binary=True)
-    # Tool artifacts never form application scope, even before .gitignore exists.
-    return sorted({p.decode("utf-8") for p in raw.split(b"\0") if p
-                   and not p.startswith((b".archctl/", b".briefcase/"))})
 
 
 def _tool_digest(source: Path) -> str:

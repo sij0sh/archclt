@@ -14,9 +14,11 @@ governed workflow. Context retains provenance and coverage without claiming a ga
 
 ## Compatible release
 
-Archclt 0.4.1 maps Briefcase 0.1.0 Python imports. Download its reviewed native
-archive and checksums from https://github.com/sij0sh/briefcase/releases/tag/v0.1.0.
-Install outside source checkouts and set `BRIEFCASE_BIN` to the absolute executable.
+Archclt maps Briefcase 0.1.1 Python imports. Use reviewed native archives and
+checksums from https://github.com/sij0sh/briefcase/releases when its v0.1.1 assets
+are published, or build the reviewed executable from
+https://github.com/sij0sh/briefcase/tree/v0.1.1. Install outside source checkouts
+and set `BRIEFCASE_BIN` to the absolute executable.
 Linux/macOS x64 and ARM64 have native build lanes. The producer needs Python 3.11+
 for Python analysis. Other Briefcase language capabilities do not expand Archclt's
 Python import enforcement scope.
@@ -24,7 +26,7 @@ Python import enforcement scope.
 
 ## V1 supported coverage
 
-Native mapping is limited to Briefcase 0.1.0 Python import assertions. It does
+Native mapping is limited to Briefcase 0.1.1 Python import assertions. It does
 not claim non-Python or runtime coverage. A fresh local gate exports evidence
 when the binary is available, or validates a supplied pinned bundle. Missing,
 stale, partial or insufficient evidence remains unknown for required decisions.
@@ -34,7 +36,7 @@ be reported as not executed when the actual binary is unavailable.
 
 ## Status
 
-V1 has a strict normalized exchange and a native mapper for **Briefcase 0.1.0 Python imports**. The mapper is tested against the real Briefcase CLI, including a mapped bundle that passes Guard. Compatibility is verified only for the Python import scope; other providers and relationship kinds remain unmapped.
+V1 has a strict normalized exchange and a native mapper for **Briefcase 0.1.1 Python imports**. The mapper is tested against the real Briefcase CLI, including a mapped bundle that passes Guard. Compatibility is verified only for the Python import scope; other providers and relationship kinds remain unmapped.
 
 `archctl.evidence.v2` is the interchange format this project accepts. `archctl.intent.v2` is a normalized intent handoff. Both contracts have self-contained JSON Schemas under `contracts/v2/`. The runtime additionally checks cross-references, freshness, scope and authority semantics. A `selective` model emits `archctl.intent.v2` and reports the same Python-only support profile; the evidence format does not change.
 

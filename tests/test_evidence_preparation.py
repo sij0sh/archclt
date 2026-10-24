@@ -53,14 +53,14 @@ class PreparationFixture(unittest.TestCase):
         """Supply wire fixtures only; real tools are exercised separately below."""
         self.commands.append(list(map(str, argv)))
         if "--version" in argv:
-            result = "0.1.0\n"
+            result = "0.1.1\n"
         elif "export-evidence" in argv:
             projection = Path(argv[argv.index("--root") + 1])
             snapshot = compile_model(projection)
             patterns = tuple(p for c in snapshot.model.components for p in c.paths)
             files = source_files(projection, patterns)
             bundle = {"schema_version": "archctl.evidence.v2",
-                      "producer": {"name": "briefcase-native-exporter", "version": "1+briefcase-0.1.0"},
+                      "producer": {"name": "briefcase-native-exporter", "version": "1+briefcase-0.1.1"},
                       "source": {"revision": "briefcase:view:1:snapshot:fixture", "files": files},
                       "coverage": {"analysis": "static", "status": "complete", "gaps": [],
                                    "components": [c.id for c in snapshot.model.components],

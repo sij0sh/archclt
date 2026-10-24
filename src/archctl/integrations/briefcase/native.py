@@ -24,7 +24,7 @@ from archctl.core.models import Snapshot, owners
 
 SCHEMA = version("evidence")
 PRODUCER = "briefcase-native-exporter"
-SUPPORT = {"profile": "briefcase-0.1.0-python-imports", "languages": ["python"], "predicates": ["imports"],
+SUPPORT = {"profile": "briefcase-0.1.1-python-imports", "languages": ["python"], "predicates": ["imports"],
            "limitation": "Only Python import edges are assessed. Other languages, dynamic imports and runtime structure are not."}
 MAX_PAGE_BYTES = 1024 * 1024
 

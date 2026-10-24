@@ -46,7 +46,7 @@ archctl context 'Change the payment response' --paths src/payments/api.py \
 ```
 
 Set `BRIEFCASE_BIN` or pass `--briefcase`. Native mapping remains limited to the
-documented Briefcase 0.1.0 Python imports. Other languages can be inventoried and
+documented Briefcase 0.1.1 Python imports. Other languages can be inventoried and
 retrieved as source candidates; their dependencies are not inferred. Conversation
 and Case references come from the coding agent rather than a session API.
 Read [compatibility and evidence limits](docs/briefcase-integration.md).

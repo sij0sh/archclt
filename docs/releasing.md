@@ -44,7 +44,7 @@ acceptance of changes to Archclt itself.
 
 ## Briefcase compatibility
 
-Native import mapping targets Briefcase 0.1.0's public JSON operations. Use its
+Native import mapping targets Briefcase 0.1.1's public JSON operations. Use its
 release binary and checksum for the supported platform. Archclt's source-only
 checks do not prove that a particular native build interoperates. Preserve
 skips and record the binaries exercised by an interoperability run.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2
+
+- Declare Briefcase 0.1.1 Python import support; native integration tests pass against the v0.1.1 binary.
+
 ## 0.4.1
 
 - Remove the tracked agent notes, architecture overview, contributor guide and refactor report.

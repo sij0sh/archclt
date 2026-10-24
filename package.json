@@ -1,6 +1,6 @@
 {
   "name": "@archclt/archctl",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Architectural context, memory and verification for coding agents",
   "license": "MIT",
   "repository": {

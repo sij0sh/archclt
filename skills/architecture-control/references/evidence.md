@@ -31,7 +31,7 @@ or unrelated findings as informational.
 ## Produce governed evidence
 
 Briefcase owns source analysis; archctl maps its supported assertions.
-Native mapping covers Briefcase 0.1.0 Python imports, not other languages or runtime behavior.
+Native mapping covers Briefcase 0.1.1 Python imports, not other languages or runtime behavior.
 Use the reviewed external producer:
 
 ```bash

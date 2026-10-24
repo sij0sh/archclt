@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Remove the tracked agent notes, architecture overview, contributor guide and refactor report.
+- Point the README, distribution manifest and distribution test at the retained docs and ADRs.
+- No runtime, contract or workflow behavior changes.
+
 ## 0.4.0
 
 - All public authoring and exchange contracts use one version, v2.

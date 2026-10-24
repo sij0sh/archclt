@@ -1,4 +1,4 @@
-include README.md CONTRIBUTING.md ARCHITECTURE.md CHANGELOG.md AGENTS.md LICENSE pyproject.toml MANIFEST.in package.json package-lock.json .gitignore .gitattributes
+include README.md CHANGELOG.md LICENSE pyproject.toml MANIFEST.in package.json package-lock.json .gitignore .gitattributes
 recursive-include src *.py
 recursive-include tests *.py
 recursive-include scripts *.py

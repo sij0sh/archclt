@@ -14,7 +14,7 @@ governed workflow. Context retains provenance and coverage without claiming a ga
 
 ## Compatible release
 
-Archclt 0.4.0 maps Briefcase 0.1.0 Python imports. Download its reviewed native
+Archclt 0.4.1 maps Briefcase 0.1.0 Python imports. Download its reviewed native
 archive and checksums from https://github.com/sij0sh/briefcase/releases/tag/v0.1.0.
 Install outside source checkouts and set `BRIEFCASE_BIN` to the absolute executable.
 Linux/macOS x64 and ARM64 have native build lanes. The producer needs Python 3.11+

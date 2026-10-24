@@ -21,8 +21,8 @@ class DistributionTests(unittest.TestCase):
         source = cls.directory / 'source'; source.mkdir()
         for name in ('src', 'tests', 'scripts', 'contracts', 'docs', 'architecture', 'skills', 'npm', '.github'):
             shutil.copytree(ROOT/name, source/name, ignore=shutil.ignore_patterns('__pycache__', 'runtime', '*.pyc'))
-        for name in ('pyproject.toml', 'MANIFEST.in', 'LICENSE', 'README.md', 'CONTRIBUTING.md',
-                     'ARCHITECTURE.md', 'AGENTS.md', 'CHANGELOG.md', 'package.json', 'package-lock.json', '.gitignore', '.gitattributes'):
+        for name in ('pyproject.toml', 'MANIFEST.in', 'LICENSE', 'README.md', 'CHANGELOG.md',
+                     'package.json', 'package-lock.json', '.gitignore', '.gitattributes'):
             shutil.copy2(ROOT/name, source/name)
         cls.output = cls.directory/'artifacts'; cls.output.mkdir()
         code = 'import setuptools.build_meta as b; b.build_wheel('+repr(str(cls.output))+'); b.build_sdist('+repr(str(cls.output))+')'

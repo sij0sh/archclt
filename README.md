@@ -60,8 +60,8 @@ explicitly when architectural acceptance needs a reviewed baseline. Context and
 ordinary verification never require that adoption.
 
 See [authoring](docs/authoring.md), [CLI contracts](docs/cli-contracts.md),
-[installation](docs/install.md), [support status](docs/status.md),
-[architecture](ARCHITECTURE.md) and [release notes](CHANGELOG.md).
+[installation](docs/install.md), [support status](docs/status.md) and
+[release notes](CHANGELOG.md).
 
 ## Develop and validate
 

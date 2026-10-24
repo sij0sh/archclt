@@ -1,6 +1,6 @@
 # Support status
 
-The 0.4.0 release makes context, architectural memory and task-authorized
+The 0.4.1 release makes context, architectural memory and task-authorized
 verification the normal agent workflow. These use advisory v2 contracts. The
 optional model/impact/guard/gate/observe workflow also uses v2. The two contract
 families remain independent.

@@ -75,6 +75,7 @@ def parse_memory(value: object) -> Memory:
 
 
 def read_memories(root: Path, directory: str = "architecture/memory") -> tuple[Memory, ...]:
+    root = root.resolve()
     folder = contained(root, directory)
     records = []
     for path in sorted(folder.glob("*.json")):

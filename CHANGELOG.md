@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3
+
+- Fix memory reads when the repository root is reached through a symlink, including macOS `/var` to `/private/var`.
+- Run CI actions on Node 24 and pin Linux jobs to Ubuntu 24.04.
+- Add regression coverage for symlinked repository roots.
+
 ## 0.4.2
 
 - Declare Briefcase 0.1.1 Python import support; native integration tests pass against the v0.1.1 binary.

@@ -1,6 +1,6 @@
 # Support status
 
-The 0.4.2 release makes context, architectural memory and task-authorized
+The 0.4.3 release makes context, architectural memory and task-authorized
 verification the normal agent workflow. These use advisory v2 contracts. The
 optional model/impact/guard/gate/observe workflow also uses v2. The two contract
 families remain independent.
@@ -8,8 +8,8 @@ families remain independent.
 Supported: Python 3.11+, bounded source inventories and lexical retrieval, optional
 model/standalone ADR rationale, provisional components and rename aliases, memory
 capture with provenance and explicit conflict/replacement links, hypothetical
-imports, scoped execution records and harness import. Tests target Linux; macOS
-and Windows process behavior requires platform validation for this update.
+imports, scoped execution records and harness import. Tests target Linux and
+macOS; Windows process behavior requires platform validation for this update.
 
 Briefcase remains the external source evidence producer. Native mapping covers
 the documented Python imports only. Other source file extensions can be retrieved

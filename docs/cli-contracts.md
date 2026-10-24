@@ -141,7 +141,7 @@ Shape:
     "verify_command": {"requires_model": false, "requires_baseline": false},
     "governed_gate": {"requires_model": true, "requires_baseline": true, "adoption": "not_assessed"}
   },
-  "tool": {"name": "archctl", "version": "0.4.2"},
+  "tool": {"name": "archctl", "version": "0.4.3"},
   "model": {
     "state": "valid",
     "directory": "architecture",

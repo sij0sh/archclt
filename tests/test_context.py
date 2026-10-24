@@ -46,6 +46,13 @@ class ContextWorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return json.loads(result.stdout) if result.stdout else json.loads(result.stderr)
 
+    def test_memory_operations_accept_a_symlinked_root(self):
+        alias = self.root.parent / f"{self.root.name}-alias"
+        alias.symlink_to(self.root, target_is_directory=True)
+        self.addCleanup(alias.unlink, missing_ok=True)
+        remember(alias, note())
+        self.assertEqual([record.id for record in read_memories(alias)], ["batching-lifetime"])
+
     def test_greenfield_context_needs_no_model_git_baseline_or_existing_paths(self):
         packet = self.cli("context", "Create a new event worker", "--paths", "src/new/events.py")
         self.assertEqual(packet["status"], "assembled")
